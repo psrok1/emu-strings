@@ -1,0 +1,3 @@
+[submodule "wine-source"]
+	path = wine-source
+	url = https://github.com/psrok1/wine-modified
