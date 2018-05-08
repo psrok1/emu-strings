@@ -5,4 +5,4 @@ dpkg --add-architecture i386
 ( cd wine-source && ./configure && make -j4 ) || exit 1
 export WINE=${PWD}/wine-source/wine
 export WINEPREFIX=${PWD}/wine-prefix
-./tools/winetricks mdac27
+./tools/winetricks mdac27 wsh57
