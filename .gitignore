@@ -1,2 +1,5 @@
 wine-prefix/
+.idea/
+*.pyc
+
 
