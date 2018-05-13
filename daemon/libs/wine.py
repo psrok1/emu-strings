@@ -9,16 +9,19 @@ class WineLauncher(object):
     SOFT_TIMEOUT = 15
     HARD_TIMEOUT = 30
 
-    def __init__(self, wine_exec, wine_prefix):
-        self.wine = wine_exec
-        self.wine_prefix = wine_prefix
+    def __init__(self, ctx):
+        self.wine = ctx.WINE_EXEC
+        self.wine_prefix = ctx.WINE_PREFIX
 
     def handle_execution(self, proc):
-        proc.communicate()
+        with open("analysis.log", "w") as f:
+            for line in proc.stdout:
+                f.write(line)
         return True
 
     def analyze_script(self, script_path):
-        timeout = gevent.Timeout(self.HARD_TIMEOUT).start()
+        timeout = gevent.Timeout(self.HARD_TIMEOUT)
+        timeout.start()
         log.info("Starting {}".format(script_path))
         proc = subprocess.Popen(
             [self.wine, script_path, "/T", str(self.SOFT_TIMEOUT)],
@@ -38,7 +41,7 @@ class WineLauncher(object):
             proc.kill()
             log.warning("Wine killed - hard timeout reached!")
         finally:
-            timeout.close()
+            timeout.cancel()
 
         if not finished:
             log.warning("Script interrupted - timeout reached!")
