@@ -49,7 +49,7 @@ class DNSListener(FakenetListener):
                 try:
                     data = self.get_data()
                     self.send_data(self.dns_response(data))
-                except Exception as exc:
+                except Exception:
                     import traceback
                     log.exception(traceback.format_exc())
 

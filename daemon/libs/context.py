@@ -5,7 +5,7 @@ from libs import report, wine
 class AnalysisContext(object):
     WINE_EXEC = "/root/daemon/wine-build/wine"
     WINE_PREFIX = "/root/daemon/wine-prefix/"
-    SAMPLE_PATH = "/root/sample/"
+    SAMPLE_PATH = os.getcwd()
     SAMPLE_EXT = [".js", ".jse", ".vbs", ".vbe"]
 
     def __init__(self):
@@ -16,7 +16,7 @@ class AnalysisContext(object):
                          os.listdir(self.SAMPLE_PATH))
         if len(samples) != 1:
             raise Exception("No valid WSH samples found in {}!".format(self.SAMPLE_PATH))
-        self.sample = os.path.join("/root/sample/", samples[0])
+        self.sample = samples[0]
 
     def analyze(self):
         self.wine.analyze_script(self.sample)

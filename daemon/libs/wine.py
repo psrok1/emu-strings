@@ -14,17 +14,17 @@ class WineLauncher(object):
         self.wine_prefix = ctx.WINE_PREFIX
 
     def handle_execution(self, proc):
-        with open("analysis.log", "w") as f:
+        with open("wine.log", "w") as f:
             for line in proc.stdout:
                 f.write(line)
         return True
 
-    def analyze_script(self, script_path):
+    def analyze_script(self, script_name):
         timeout = gevent.Timeout(self.HARD_TIMEOUT)
         timeout.start()
-        log.info("Starting {}".format(script_path))
+        log.info("Starting {}".format(script_name))
         proc = subprocess.Popen(
-            [self.wine, script_path, "/T", str(self.SOFT_TIMEOUT)],
+            [self.wine, "cscript", script_name, "/T", str(self.SOFT_TIMEOUT)],
             env={
                 "WINEPREFIX": self.wine_prefix,
                 "WINEDEBUG": "trace+ole,wininet,winhttp"

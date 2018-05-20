@@ -3,6 +3,7 @@ import logging
 
 log = logging.getLogger("winedrop.fakenet.listener")
 
+
 class FakenetListener(object):
     def __init__(self, ctx):
         self.context = ctx
