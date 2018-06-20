@@ -51,7 +51,7 @@ if __name__ == "__main__":
     else:
         ftype = sys.argv[2].lower()
     if ftype not in ["js", "jse", "vbs", "vbe"]:
-        raise Exception("Unsupported type {}".format(fype))
+        raise Exception("Unsupported type {}".format(ftype))
     with open(fname, "rb") as f:
         code = f.read()
     if re.search("#@~\^[a-zA-Z0-9+/]{6}==", code):

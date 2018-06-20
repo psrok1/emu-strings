@@ -5,6 +5,7 @@ from libs import report, wine
 class AnalysisContext(object):
     WINE_EXEC = "/root/daemon/wine-build/wine"
     WINE_PREFIX = "/root/daemon/wine-prefix/"
+    WINE_USER = "winedrop"
     SAMPLE_PATH = os.getcwd()
     SAMPLE_EXT = [".js", ".jse", ".vbs", ".vbe"]
 

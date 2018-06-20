@@ -15,8 +15,9 @@ class HTTPListener(FakenetListener):
 
             def _get_url(self):
                 host = self.headers["Host"] if "Host" in self.headers else self.client_address[0]
+                scheme = "https" if "X-HTTPS" in self.headers else self.SCHEME
                 path = self.path
-                return "{}://{}{}".format(self.SCHEME, host, path)
+                return "{}://{}{}".format(scheme, host, path)
 
             def _set_headers(self):
                 self.send_response(500)
@@ -42,11 +43,6 @@ class HTTPListener(FakenetListener):
             SCHEME = "https"
 
         self.servers = [
-            HTTPServer(("127.0.0.1", 80), HTTPRequestHandler)
+            HTTPServer(("127.0.0.1", 80), HTTPRequestHandler),
+            HTTPServer(("127.0.0.1", 443), HTTPRequestHandler)
         ]
-        try:
-            httpsd = HTTPServer(("127.0.0.1", 443), HTTPSRequestHandler)
-            httpsd.socket = ssl.wrap_socket(httpsd.socket, certfile='./server.pem', server_side=True)
-            self.servers.append(httpsd)
-        except Exception as e:
-            pass

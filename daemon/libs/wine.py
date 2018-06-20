@@ -6,12 +6,13 @@ log = logging.getLogger("winedrop.wine")
 
 
 class WineLauncher(object):
-    SOFT_TIMEOUT = 15
-    HARD_TIMEOUT = 30
+    SOFT_TIMEOUT = 90
+    HARD_TIMEOUT = 120
 
     def __init__(self, ctx):
         self.wine = ctx.WINE_EXEC
         self.wine_prefix = ctx.WINE_PREFIX
+        self.wine_user = ctx.WINE_USER
 
     def handle_execution(self, proc):
         with open("wine.log", "w") as f:
@@ -27,7 +28,9 @@ class WineLauncher(object):
             [self.wine, "cscript", script_name, "/T", str(self.SOFT_TIMEOUT)],
             env={
                 "WINEPREFIX": self.wine_prefix,
-                "WINEDEBUG": "trace+ole,wininet,winhttp"
+                "WINEDLLOVERRIDES": "jscript,vbscript=n",
+                "WINEDEBUG": "trace+ole,wininet,winhttp,shell,winsock",
+                "USER": self.wine_user
             },
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)

@@ -15,11 +15,17 @@ sudo dpkg --add-architecture i386
 
 # Building wine
 
-( cd wine-source && ./configure && make -j4 ) || exit 1
+if [ "$1" == "all" ] || [ ! -f ./wine-source/Makefile ]; then
+    ( cd wine-source && ./configure ) || exit 1
+fi
+
+( cd wine-source && make -j4 ) || exit 1
 
 # Installing Wine dependencies
 
+export USER=winedrop
 export WINE=${PWD}/wine-source/wine
+export WINEARCH=win32
 export WINEPREFIX=${PWD}/daemon/wine-prefix
 
 echo "#######################################################"

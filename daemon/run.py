@@ -1,7 +1,7 @@
 from gevent.monkey import patch_all
 patch_all()
 
-import logging
+import sys, logging
 
 def setup_logger():
     log = logging.getLogger("winedrop")
@@ -36,8 +36,8 @@ try:
     gevent.spawn(context.analyze).join()
 
     fakenet.shutdown()
-    exit(0)
+    sys.exit(0)
 except Exception as e:
     import traceback
     log.exception(traceback.format_exc())
-    exit(1)
+    sys.exit(1)
