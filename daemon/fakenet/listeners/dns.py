@@ -31,13 +31,11 @@ class DNSListener(FakenetListener):
 
                 if qt == '*':
                     log.debug("* -> A")
-                    qt = A
+                    qt = "A"
 
-                if qt == A:
+                if qt == "A":
                     log.debug("Reply -> 127.0.0.1")
                     reply.add_answer(RR(rname=qname,
-                                        rtype=QTYPE[qt],
-                                        rclass=1,
                                         ttl=60 * 5,
                                         rdata=A("127.0.0.1")))
                 else:
