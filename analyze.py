@@ -37,10 +37,11 @@ def start_analysis(aid, code, lang):
             }
         }
     )
+    for line in container.logs(stream=True):
+        print line.strip()
     status = container.wait()["StatusCode"]
-    print container.logs()
     container.remove()
-    return status
+    return status == 0
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
