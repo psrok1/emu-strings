@@ -4,7 +4,8 @@ patch_all()
 import sys, logging
 
 def setup_logger():
-    log = logging.getLogger("winedrop")
+    logging.basicConfig(level=logging.DEBUG)
+    log = logging.getLogger()
 
     fh = logging.FileHandler('winedrop.log')
     fh.setLevel(logging.DEBUG)
@@ -23,21 +24,22 @@ def setup_logger():
 
 log = setup_logger()
 
-import gevent
-from libs.context import AnalysisContext
-from fakenet import Fakenet
+if __name__ == "__main__":
+    from libs.context import AnalysisContext
+    from fakenet import Fakenet
+    import gevent
 
-try:
-    context = AnalysisContext()
+    try:
+        context = AnalysisContext()
 
-    fakenet = Fakenet(context)
-    fakenet.start()
+        fakenet = Fakenet(context)
+        fakenet.start()
 
-    gevent.spawn(context.analyze).join()
+        gevent.spawn(context.analyze).join()
 
-    fakenet.shutdown()
-    sys.exit(0)
-except Exception as e:
-    import traceback
-    log.exception(traceback.format_exc())
-    sys.exit(1)
+        fakenet.shutdown()
+        sys.exit(0)
+    except Exception as e:
+        import traceback
+        log.exception(traceback.format_exc())
+        sys.exit(1)
