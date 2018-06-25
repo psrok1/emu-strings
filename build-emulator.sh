@@ -26,7 +26,7 @@ fi
 export USER=winedrop
 export WINE=${PWD}/wine-source/wine
 export WINEARCH=win32
-export WINEPREFIX=${PWD}/daemon/wine-prefix
+export WINEPREFIX=${PWD}/emulator/wine-prefix
 
 echo "#######################################################"
 echo "# Now install all components you are asked for        #"
@@ -35,22 +35,22 @@ echo "#######################################################"
 
 ./tools/winetricks mdac27 wsh57
 
-# Prepare daemon image context
+# Prepare emulator image context
 
 (
-    mkdir -p daemon/wine-build
+    mkdir -p emulator/wine-build
     cd wine-source
-    find . -name \*.so -exec cp --parents '{}' ../daemon/wine-build -v \;
-    find . -name \*.so.* -exec cp --parents '{}' ../daemon/wine-build -v \;
-    find . -name \*.fake -exec cp --parents '{}' ../daemon/wine-build -v \;
-    cp --parents loader/wine ../daemon/wine-build/ -v
-    cp --parents server/wineserver ../daemon/wine-build/ -v
-    cp ./wine ../daemon/wine-build -v
+    find . -name \*.so -exec cp --parents '{}' ../emulator/wine-build -v \;
+    find . -name \*.so.* -exec cp --parents '{}' ../emulator/wine-build -v \;
+    find . -name \*.fake -exec cp --parents '{}' ../emulator/wine-build -v \;
+    cp --parents loader/wine ../emulator/wine-build/ -v
+    cp --parents server/wineserver ../emulator/wine-build/ -v
+    cp ./wine ../emulator/wine-build -v
 )
 
 # Build docker image
 
 (
-    cd daemon
+    cd emulator
     docker build . -t winedrop
 )

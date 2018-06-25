@@ -1,5 +1,7 @@
-daemon/wine-prefix/
-daemon/wine-build/
+emulator/wine-prefix/
+emulator/wine-build/
 .idea/
 dev-files/
 *.pyc
+samples/
+analyses/

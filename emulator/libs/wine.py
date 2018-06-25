@@ -1,24 +1,24 @@
 import gevent
 import subprocess
 import logging
+import os
 
 log = logging.getLogger("winedrop.wine")
 
 
 class WineLauncher(object):
-    SOFT_TIMEOUT = 90
-    HARD_TIMEOUT = 120
+    SOFT_TIMEOUT = os.getenv("SOFT_TIMEOUT", 30)
+    HARD_TIMEOUT = os.getenv("HARD_TIMEOUT", 60)
+    WINEDROP_PATH = "/root/winedrop/"
+    WINE_EXEC = os.path.join(WINEDROP_PATH, "wine-build/wine")
+    WINE_PREFIX = os.path.join(WINEDROP_PATH, "wine-prefix")
+    WINE_USER = "winedrop"
     SCRIPT_ENGINE = {
         "js": "JScript",
         "jse": "JScript.Encode",
         "vbs": "VBScript",
         "vbe": "VBScript.Encode"
     }
-
-    def __init__(self, ctx):
-        self.wine = ctx.WINE_EXEC
-        self.wine_prefix = ctx.WINE_PREFIX
-        self.wine_user = ctx.WINE_USER
 
     def handle_execution(self, proc):
         with open("wine.log", "w") as f:
@@ -38,12 +38,12 @@ class WineLauncher(object):
 
         log.info("Starting {} using {} engine".format(script_name, engine_name))
         proc = subprocess.Popen(
-            [self.wine, "cscript", "//E:"+engine_name, "//T:"+str(self.SOFT_TIMEOUT), script_name],
+            [self.WINE_EXEC, "cscript", "//E:"+engine_name, "//T:"+str(self.SOFT_TIMEOUT), script_name],
             env={
-                "WINEPREFIX": self.wine_prefix,
+                "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",
                 "WINEDEBUG": "trace+ole,wininet,winhttp,shell,winsock",
-                "USER": self.wine_user
+                "USER": self.WINE_USER
             },
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)

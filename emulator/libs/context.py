@@ -3,15 +3,12 @@ from libs import report, wine
 
 
 class AnalysisContext(object):
-    WINE_EXEC = "/root/daemon/wine-build/wine"
-    WINE_PREFIX = "/root/daemon/wine-prefix/"
-    WINE_USER = "winedrop"
     SAMPLE_PATH = os.getcwd()
     SAMPLE_EXT = [".js", ".jse", ".vbs", ".vbe"]
 
     def __init__(self):
         self.report = report.Report()
-        self.wine = wine.WineLauncher(self)
+        self.wine = wine.WineLauncher()
         samples = filter(lambda s: any([s.lower().endswith(ext)
                                         for ext in self.SAMPLE_EXT]),
                          os.listdir(self.SAMPLE_PATH))
