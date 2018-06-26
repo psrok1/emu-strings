@@ -2,10 +2,10 @@ import celery
 import docker
 
 from libs.analysis import Analysis
+from config import CeleryConfig
 
 celery_app = celery.Celery()
-#@todo
-#celery_app.config_from_object(CeleryConfig)
+celery_app.config_from_object(CeleryConfig)
 
 docker_client = docker.from_env()
 
