@@ -1,6 +1,5 @@
 import celery
 import docker
-import docker.errors
 
 from libs.analysis import Analysis
 
@@ -49,6 +48,3 @@ def analyze_sample(analysis_id, opts):
     finally:
         if container is not None:
             container.remove()
-
-
-

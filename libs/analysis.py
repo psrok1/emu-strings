@@ -1,6 +1,8 @@
 import os
 import uuid
 
+from pymongo import MongoClient
+
 
 class Analysis(object):
     ANALYSIS_DIR = os.path.join(os.getcwd(), "./analyses/")
