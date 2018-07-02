@@ -1,5 +1,6 @@
-emulator/wine-prefix/
-emulator/wine-build/
+wine-prefix/
+wine-build/
+wine-source/
 .idea/
 dev-files/
 *.pyc
