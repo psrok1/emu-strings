@@ -1,6 +1,5 @@
 wine-prefix/
 wine-build/
-wine-source/
 .idea/
 dev-files/
 *.pyc
