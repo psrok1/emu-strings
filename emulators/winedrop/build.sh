@@ -23,17 +23,19 @@ fi
 
 # Installing Wine dependencies
 
-export USER=winedrop
-export WINE=${PWD}/wine-source/wine
-export WINEARCH=win32
-export WINEPREFIX=${PWD}/emulator/wine-prefix
+(
+    export USER=winedrop
+    export WINE=${PWD}/wine-source/wine
+    export WINEARCH=win32
+    export WINEPREFIX=${PWD}/emulator/wine-prefix
 
-echo "#######################################################"
-echo "# Now install all components you are asked for        #"
-echo "# EXCEPT wine-mono and wine-gecko (they are optional) #"
-echo "#######################################################"
+    echo "#######################################################"
+    echo "# Now install all components you are asked for        #"
+    echo "# EXCEPT wine-mono and wine-gecko (they are optional) #"
+    echo "#######################################################"
 
-./tools/winetricks mdac27 wsh57
+    ./tools/winetricks mdac27 wsh57
+) || exit 1
 
 # Prepare emulator image context
 

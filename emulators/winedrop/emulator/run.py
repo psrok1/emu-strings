@@ -1,7 +1,9 @@
 from gevent.monkey import patch_all
 patch_all()
 
-import sys, logging
+import logging
+import sys
+
 
 def setup_logger():
     logging.basicConfig(level=logging.DEBUG)
@@ -25,17 +27,17 @@ def setup_logger():
 log = setup_logger()
 
 if __name__ == "__main__":
-    from libs.context import AnalysisContext
+    from libs.wine import WineLauncher
     from fakenet import Fakenet
     import gevent
 
     try:
-        context = AnalysisContext()
+        context = WineLauncher()
 
         fakenet = Fakenet(context)
         fakenet.start()
 
-        gevent.spawn(context.analyze).join()
+        gevent.spawn(context.analyze_script).join()
 
         fakenet.shutdown()
         sys.exit(0)

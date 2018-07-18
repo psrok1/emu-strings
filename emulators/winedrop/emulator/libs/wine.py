@@ -3,22 +3,23 @@ import subprocess
 import logging
 import os
 
+from libs import report
+
 log = logging.getLogger("winedrop.wine")
 
 
 class WineLauncher(object):
-    SOFT_TIMEOUT = os.getenv("SOFT_TIMEOUT", 30)
-    HARD_TIMEOUT = os.getenv("HARD_TIMEOUT", 60)
     WINEDROP_PATH = "/root/winedrop/"
     WINE_EXEC = os.path.join(WINEDROP_PATH, "wine-build/wine")
     WINE_PREFIX = os.path.join(WINEDROP_PATH, "wine-prefix")
     WINE_USER = "winedrop"
-    SCRIPT_ENGINE = {
-        "js": "JScript",
-        "jse": "JScript.Encode",
-        "vbs": "VBScript",
-        "vbe": "VBScript.Encode"
-    }
+
+    def __init__(self):
+        self.report = report.Report()
+        self.soft_timeout = os.getenv("SOFT_TIMEOUT", 30)
+        self.hard_timeout = os.getenv("HARD_TIMEOUT", 60)
+        self.sample = os.getenv("SAMPLE")
+        self.engine = os.getenv("ENGINE")
 
     def handle_execution(self, proc):
         with open("wine.log", "w") as f:
@@ -26,19 +27,13 @@ class WineLauncher(object):
                 f.write(line)
         return True
 
-    def analyze_script(self, script_name, engine_name=None):
-        timeout = gevent.Timeout(self.HARD_TIMEOUT)
+    def analyze_script(self):
+        timeout = gevent.Timeout(self.hard_timeout)
         timeout.start()
 
-        if engine_name is None:
-            engine_name = self.SCRIPT_ENGINE.get(script_name.split(".")[-1].lower())
-
-        if engine_name is None:
-            raise Exception("Unknown extension - specify scripting engine manually")
-
-        log.info("Starting {} using {} engine".format(script_name, engine_name))
+        log.info("Starting {} using {} engine".format(self.sample, self.engine))
         proc = subprocess.Popen(
-            [self.WINE_EXEC, "cscript", "//E:"+engine_name, "//T:"+str(self.SOFT_TIMEOUT), script_name],
+            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:"+str(self.soft_timeout), self.sample],
             env={
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",
@@ -62,3 +57,4 @@ class WineLauncher(object):
         if not finished:
             log.warning("Script interrupted - timeout reached!")
             pass
+        self.report.store()
