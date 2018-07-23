@@ -1,3 +1,6 @@
 [submodule "emulators/winedrop/wine-source"]
 	path = emulators/winedrop/wine-source
 	url = https://github.com/psrok1/wine-modified.git
+[submodule "emulators/boxjs/emulator/box-js"]
+	path = emulators/boxjs/emulator/box-js
+	url = https://github.com/CapacitorSet/box-js.git

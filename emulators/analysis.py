@@ -39,7 +39,6 @@ class Analysis(object):
     def empty(self):
         """
         Is sample file bound with analysis yet?
-        :return:
         """
         return self.sample_file is None
 
@@ -59,6 +58,7 @@ class Analysis(object):
                 raise IOError("Analysis path {} doesn't exist".format(aid))
             try:
                 params = self.db_collection().find_one({"aid": aid})
+                self.status = params["status"]
                 self.engine = engines.Engine.get(params["engine"])
                 self.sample_file = "{}.{}".format(params["sha256"], self.engine.EXTENSION)
                 if "emulator" in params:
@@ -90,13 +90,13 @@ class Analysis(object):
         with open(os.path.join(self.workdir, self.sample_file), "wb") as f:
             f.write(code)
 
-    def bind_emulator_class(self, emulator_cls):
+    def bind_emulator(self, emulator):
         """
         Binds emulator class with current analysis context (sample must have been added before).
         """
         if self.empty:
             raise Exception("Sample is not added yet!")
-        assert issubclass(emulator_cls, emulators.Emulator)
+        emulator_cls = emulators.get_emulator_class(emulator)
         if not emulator_cls.is_supported(self.engine):
             raise Exception("{} is not supported by {} emulator".format(str(self.engine),
                                                                         emulator_cls.__name__))

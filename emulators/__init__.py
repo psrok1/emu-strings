@@ -92,3 +92,7 @@ def get_emulator_class(emulator_name):
     if emulator_class is None:
         raise Exception("Emulator {} not installed".format(emulator_name))
     return emulator_class
+
+
+def get_capabilities():
+    return {emucls.__name__: map(str, emucls.SUPPORTED_ENGINES) for emucls in Emulator.__subclasses__()}
