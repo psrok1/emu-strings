@@ -27,7 +27,7 @@ def get_analysis(aid):
 @app.route("/api/list/<soffs>")
 def get_analysis_list(soffs=0):
     db = emulators.analysis.Analysis.db_collection()
-    entries = list(db.find().sort({"timestamp": -1}).skip(soffs).limit(30))
+    entries = list(db.find().sort([("timestamp", -1)]).skip(soffs).limit(30))
     return jsonify(entries)
 
 
@@ -58,3 +58,6 @@ def submit_analysis():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)})
+
+if __name__ == '__main__':
+    app.run()

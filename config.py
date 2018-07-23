@@ -1,9 +1,10 @@
 class CeleryConfig(object):
-    pass
+    BROKER_URL = 'redis://localhost/0'
+    CELERY_ACCEPT_CONTENT = ['json']
 
 
 class MongoConfig(object):
-    DB_URL = "mongodb://localhost:27071/"
+    DB_URL = "mongodb://localhost:27017/"
     DB_NAME = "winedrop"
 
 

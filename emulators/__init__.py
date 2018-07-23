@@ -1,7 +1,5 @@
 import pkgutil
 
-import docker
-
 from emulators.analysis import Analysis
 
 
