@@ -5,3 +5,4 @@ dev-files/
 *.pyc
 samples/
 analyses/
+node_modules/
