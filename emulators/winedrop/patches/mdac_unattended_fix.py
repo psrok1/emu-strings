@@ -7,6 +7,8 @@ MDAC_TYP.EXE doesn't pass unattended installation flag, so EULA prompt is blocki
 This script overwrites RUNPROGRAM inside MDAC_TYP binary, adding "/q" argument to command line
 """
 
+print "Applying mdac_unattended_fix.py patch on {}".format(sys.argv[1])
+
 mdac = pefile.PE(sys.argv[1])
 
 rsrc = mdac.DIRECTORY_ENTRY_RESOURCE.entries
@@ -24,3 +26,5 @@ mdac.set_bytes_at_rva(runarg_struct.OffsetToData, new_runarg)
 runarg_struct.Size = len(new_runarg)
 with open(sys.argv[1], "wb") as f:
     f.write(mdac.write())
+
+print "MDAC_TYP.EXE patched successfully!"

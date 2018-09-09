@@ -1,6 +1,7 @@
+import os
 import StringIO
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 import daemon
 import emulators
@@ -47,7 +48,7 @@ def submit_analysis():
         strfd = StringIO.StringIO()
         file.save(strfd)
         # Add sample to analysis
-        analysis.add_sample(strfd.getvalue(), engine)
+        analysis.add_sample(strfd.getvalue(), engine, filename=file.filename)
         # Bind specified emulator
         analysis.bind_emulator(emulator)
         # Spawn task to daemon
@@ -58,6 +59,16 @@ def submit_analysis():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)})
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    path_dir = os.path.abspath("web/dist")
+    if path != "" and os.path.exists(os.path.join(path_dir, path)):
+        return send_from_directory(os.path.join(path_dir), path)
+    else:
+        return send_from_directory(os.path.join(path_dir), 'index.html')
 
 if __name__ == '__main__':
     app.run()

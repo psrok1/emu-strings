@@ -66,7 +66,7 @@ class Analysis(object):
             except IndexError:
                 raise Exception("Analysis {} doesn't contain valid sample file!".format(aid))
 
-    def add_sample(self, code, engine):
+    def add_sample(self, code, engine, filename=None):
         """
         Adds sample to analysis workdir
         """
@@ -85,6 +85,7 @@ class Analysis(object):
             }
         }
         self.sample_file = "{}.{}".format(params["sha256"], engine.EXTENSION)
+        params["filename"] = filename or self.sample_file
         self.db_collection().update({"aid": self.aid}, params, {"upsert": True})
         # Add sample to analysis folder
         with open(os.path.join(self.workdir, self.sample_file), "wb") as f:

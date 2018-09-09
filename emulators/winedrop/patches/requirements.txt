@@ -1,1 +1,5 @@
 pefile
+construct==2.5.2
+pdbparse
+requests
+lief

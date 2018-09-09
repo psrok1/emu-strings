@@ -8,15 +8,16 @@ RUN ( if [ ! -f ./wine-source/Makefile ]; then ./configure; else true; fi; ) && 
 
 # STAGE 2 === === === ===
 # Building emulator image
-FROM i386/ubuntu
-RUN apt update && apt install -y gcc-multilib python-pip libxml2 libgnutls30 xvfb wget cabextract
+FROM ubuntu
+RUN dpkg --add-architecture i386 && apt update && apt install -y gcc-multilib python-pip libxml2:i386 libgnutls30:i386 xvfb:i386 wget cabextract
+WORKDIR /opt/wine-source
+COPY --from=winedrop-build /opt/wine-source .
+
 ADD ./emulator/requirements.txt /opt/emulator/requirements.txt
 RUN pip install -r /opt/emulator/requirements.txt
 ADD ./patches/requirements.txt /opt/patches/requirements.txt
 RUN pip install -r /opt/patches/requirements.txt
 
-WORKDIR /opt/wine-source
-COPY --from=winedrop-build /opt/wine-source .
 ENV WINEDLLOVERRIDES="mscoree,mshtml="
 ENV WINEPREFIX="/opt/wine-prefix"
 ENV WINE="/opt/wine-source/wine"
