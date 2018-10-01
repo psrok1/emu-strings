@@ -22,8 +22,7 @@ load_mdac28()
 
 w_call mdac28
 
-WINESYSTEM32="$WINEPREFIX/drive_c/windows/system32"
+export WINESYSTEM32="$WINEPREFIX/drive_c/windows/system32"
 
-w_try python pdblib/dl_syms.py "$WINESYSTEM32/jscript.dll"
-w_try python pdblib/dl_syms.py "$WINESYSTEM32/vbscript.dll"
-w_try python pdblib/dl_syms.py "$WINESYSTEM32/cscript.exe"
+w_try python apply_hooks.py
+cp winedrop.dll "$WINESYSTEM32/winedrop.dll"

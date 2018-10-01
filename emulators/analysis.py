@@ -50,8 +50,9 @@ class Analysis(object):
         self.container = None
         self.status = None
         if aid is None:
-            self.aid = uuid.uuid4()
+            self.aid = str(uuid.uuid4())
             os.makedirs(self.workdir)
+            print self.db_collection().insert({"aid": self.aid, "status": self.STATUS_PENDING, "timestamp": datetime.now()})
         else:
             self.aid = aid
             if not os.path.isdir(self.workdir):
@@ -72,21 +73,19 @@ class Analysis(object):
         """
         if not self.empty:
             raise Exception("Sample is added yet!")
-        self.engine = engine
+        self.engine = engines.Engine.get(engine)
         params = {
-            "md5": hashlib.md5().update(code).hexdigest(),
-            "sha1": hashlib.md5().update(code).hexdigest(),
-            "sha256": hashlib.sha256().update(code).hexdigest(),
-            "sha512": hashlib.sha512().update(code).hexdigest(),
-            "engine": str(engine),
-            "status": self.STATUS_PENDING,
-            "$setOnInsert": {
-                "timestamp": datetime.now(),
+            "$set": {
+                "md5": hashlib.md5(code).hexdigest(),
+                "sha1": hashlib.sha1(code).hexdigest(),
+                "sha256": hashlib.sha256(code).hexdigest(),
+                "sha512": hashlib.sha512(code).hexdigest(),
+                "engine": str(engine)
             }
         }
-        self.sample_file = "{}.{}".format(params["sha256"], engine.EXTENSION)
-        params["filename"] = filename or self.sample_file
-        self.db_collection().update({"aid": self.aid}, params, {"upsert": True})
+        self.sample_file = "{}.{}".format(params["$set"]["sha256"], self.engine.EXTENSION)
+        params["$set"]["filename"] = filename or self.sample_file
+        self.db_collection().update({"aid": self.aid}, params)
         # Add sample to analysis folder
         with open(os.path.join(self.workdir, self.sample_file), "wb") as f:
             f.write(code)
@@ -105,7 +104,9 @@ class Analysis(object):
         self.emulator_class = emulator_cls
 
         params = {
-            "emulator": emulator_cls.__name__
+            "$set": {
+                "emulator": emulator_cls.__name__
+            }
         }
         self.db_collection().update({"aid": self.aid}, params)
 
@@ -113,5 +114,5 @@ class Analysis(object):
         """
         Sets analysis status
         """
-        self.db_collection().update({"aid": self.aid}, {"status": status})
+        self.db_collection().update({"aid": self.aid}, {"$set": {"status": status}})
         self.status = status

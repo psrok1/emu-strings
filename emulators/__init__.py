@@ -1,3 +1,4 @@
+import os
 import pkgutil
 
 from emulators.analysis import Analysis
@@ -23,9 +24,9 @@ class Emulator(object):
         """
         self.analysis = anal
         self.env = {
-            "SOFT_TIMEOUT": opts.get("soft_timeout", 60),
-            "HARD_TIMEOUT": opts.get("hard_timeout", 90),
-            "SAMPLE": anal.sample_file,
+            "SOFT_TIMEOUT": opts.get("soft_timeout", 60.0),
+            "HARD_TIMEOUT": opts.get("hard_timeout", 90.0),
+            "SAMPLE": os.path.join("/opt/analysis", anal.sample_file),
             "ENGINE": str(anal.engine)
         }
 
@@ -41,6 +42,7 @@ class Emulator(object):
         """
         Starts analysis using emulator
         """
+        print "Task started"
         container = None
         try:
             container = docker_client.containers.run(
@@ -50,19 +52,25 @@ class Emulator(object):
                 network_mode="none",
                 environment=self.env,
                 volumes={
-                    self.analysis.workdir: {
-                        "bind": "/root/analysis",
+                    os.path.abspath(self.analysis.workdir): {
+                        "bind": "/opt/analysis",
                         "mode": "rw"
                     }
                 }
             )
             self.analysis.set_status(Analysis.STATUS_IN_PROGRESS)
+            for log in container.logs(stream=True):
+                print log
             if container.wait()["StatusCode"] == 0:
+                print "Task succeeded"
                 self.analysis.set_status(Analysis.STATUS_SUCCESS)
                 self._report()
             else:
+                print "Task failed"
                 self.analysis.set_status(Analysis.STATUS_FAILED)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             if analysis:
                 self.analysis.set_status(Analysis.STATUS_FAILED)
             raise e

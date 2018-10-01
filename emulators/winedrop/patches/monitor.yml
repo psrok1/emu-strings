@@ -1,0 +1,2 @@
+cscript.exe:
+  "?Quit@CHostObj@@UAGJH@Z": hook_IgnoreQuit

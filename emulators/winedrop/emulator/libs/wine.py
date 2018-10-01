@@ -9,15 +9,14 @@ log = logging.getLogger("winedrop.wine")
 
 
 class WineLauncher(object):
-    WINEDROP_PATH = "/root/winedrop/"
-    WINE_EXEC = os.path.join(WINEDROP_PATH, "wine-build/wine")
-    WINE_PREFIX = os.path.join(WINEDROP_PATH, "wine-prefix")
+    WINE_EXEC = os.getenv("WINE")
+    WINE_PREFIX = os.getenv("WINEPREFIX")
     WINE_USER = "winedrop"
 
     def __init__(self):
         self.report = report.Report()
-        self.soft_timeout = os.getenv("SOFT_TIMEOUT", 30)
-        self.hard_timeout = os.getenv("HARD_TIMEOUT", 60)
+        self.soft_timeout = os.getenv("SOFT_TIMEOUT", 30.0)
+        self.hard_timeout = os.getenv("HARD_TIMEOUT", 60.0)
         self.sample = os.getenv("SAMPLE")
         self.engine = os.getenv("ENGINE")
 
@@ -28,7 +27,7 @@ class WineLauncher(object):
         return True
 
     def analyze_script(self):
-        timeout = gevent.Timeout(self.hard_timeout)
+        timeout = gevent.Timeout(float(self.hard_timeout))
         timeout.start()
 
         log.info("Starting {} using {} engine".format(self.sample, self.engine))

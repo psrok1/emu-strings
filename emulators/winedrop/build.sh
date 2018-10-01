@@ -11,5 +11,5 @@ fi
 # Building wine
 
 (
-    docker build .
+    docker build . -t winedrop
 ) || exit 1

@@ -28,7 +28,7 @@ def download_pdb(guid, fname):
                 print "HTTP Error {}".format(outfile.status_code)
     return None
 
-def handle_pe(pe_file):
+def download_pdb_by_pe(pe_file):
     dbgdata, tp = get_pe_debug_data(pe_file)
     if tp == "IMAGE_DEBUG_TYPE_CODEVIEW":
         # XP+
@@ -74,4 +74,4 @@ def handle_pe(pe_file):
         os.system("cabextract %s" % saved_file)
 
 if __name__ == "__main__":
-    handle_pe(sys.argv[1])
+    download_pdb_by_pe(sys.argv[1])

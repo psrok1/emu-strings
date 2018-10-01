@@ -52,23 +52,13 @@ def submit_analysis():
         # Bind specified emulator
         analysis.bind_emulator(emulator)
         # Spawn task to daemon
-        daemon.analyze_sample.apply_async(analysis.aid, request.form)
+        daemon.analyze_sample.apply_async((str(analysis.aid), request.form))
         # Return analysis id
-        return jsonify({"aid": analysis.aid})
+        return jsonify({"aid": str(analysis.aid)})
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)})
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    path_dir = os.path.abspath("web/dist")
-    if path != "" and os.path.exists(os.path.join(path_dir, path)):
-        return send_from_directory(os.path.join(path_dir), path)
-    else:
-        return send_from_directory(os.path.join(path_dir), 'index.html')
 
 if __name__ == '__main__':
     app.run()

@@ -4,5 +4,7 @@ wine-build/
 dev-files/
 *.pyc
 samples/
-analyses/
+analysis/
 node_modules/
+.vscode/
+venv/

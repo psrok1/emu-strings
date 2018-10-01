@@ -1,7 +1,10 @@
+import os
 import struct
-from pefile import PE
 
+from pefile import PE
 from yaml import load
+
+from pdblib.dl_syms import download_pdb_by_pe
 from pdblib.read_syms import read_symbols
 
 p32 = lambda d: struct.pack("<I", d & 0xFFFFFFFF)
@@ -113,15 +116,18 @@ class WSHInstrumentation(object):
         So now we're effectively calling "int __stdcall hook_fn(orig_ptr, a, b, c)" with callee_ptr as return address.
         """
         tramp_code = ''.join([
-            "\x58",             # pop eax
-            "\x87\x04\x24",     # xchg [esp], eax
-            "\x50",             # push eax
-            "\xe9"              # jmp ...
+            "\x58",                  # pop eax
+            "\x87\x04\x24",          # xchg [esp], eax
+            "\x50",                  # push eax
+            "\xe8\x00\x00\x00\x00",  # call $+5
+            "\x5a",                  # pop edx
+            "\xff\xa2"               # jmp [edx+...]
         ])
+
         tramp_size = len(tramp_code)+4
         tramp_rva = []
         for va in iat:
-            tramp_rva.append(self.append(tramp_code+p32((va-(self.next_rva()+tramp_size)))))
+            tramp_rva.append(self.append(tramp_code+p32((va-(self.next_rva()+tramp_size-1)))))
             self.align(16, '\xcc')
         self.align(0x200)
         return tramp_rva
@@ -137,3 +143,19 @@ class WSHInstrumentation(object):
 
     def write(self, fname):
         self.pe.write(fname)
+
+if __name__ == "__main__":
+    for libname, libroutines in load(open("monitor.yml")).iteritems():
+        pdbpath = os.path.splitext(libname)[0]+".pdb"
+        libpath = os.path.join(os.getenv("WINESYSTEM32", './'), libname)
+        if not os.path.isfile(pdbpath):
+            download_pdb_by_pe(os.path.join(os.getenv("WINESYSTEM32", './'), libname))
+        syms = {sym[0]: sym[1] for sym in read_symbols(pdbpath)}
+        libwsh = WSHInstrumentation(libpath)
+        monroutines = list(set(libroutines.values()))
+        monrva = libwsh.rebuild_imports(monroutines)
+        monrva = {monroutines[idx]: rva for idx, rva in enumerate(libwsh.add_trampolines(monrva))}
+        for routine, hook in libroutines.iteritems():
+            libwsh.hook_patch(syms[routine], monrva[hook])
+        libwsh.write(libpath)
+        print "[+] Applied patches on {}".format(libpath)

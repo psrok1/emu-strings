@@ -2,3 +2,4 @@ celery
 pymongo
 docker
 flask
+redis
