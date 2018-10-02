@@ -1,5 +1,6 @@
 cscript.exe:
   "?Quit@CHostObj@@UAGJH@Z": hook_IgnoreQuit
+  "?Sleep@CHostObj@@UAGJJ@Z": hook_IgnoreSleep
 jscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@2PAPAVNameList@@@Z": hook_ParseSource  
 vbscript.dll:
