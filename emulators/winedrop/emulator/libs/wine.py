@@ -15,8 +15,8 @@ class WineLauncher(object):
 
     def __init__(self):
         self.report = report.Report()
-        self.soft_timeout = os.getenv("SOFT_TIMEOUT", 30.0)
-        self.hard_timeout = os.getenv("HARD_TIMEOUT", 60.0)
+        self.soft_timeout = float(os.getenv("SOFT_TIMEOUT", 30.0))
+        self.hard_timeout = float(os.getenv("HARD_TIMEOUT", 60.0))
         self.sample = os.getenv("SAMPLE")
         self.engine = os.getenv("ENGINE")
 
@@ -27,16 +27,16 @@ class WineLauncher(object):
         return True
 
     def analyze_script(self):
-        timeout = gevent.Timeout(float(self.hard_timeout))
+        timeout = gevent.Timeout(self.hard_timeout)
         timeout.start()
 
         log.info("Starting {} using {} engine".format(self.sample, self.engine))
         proc = subprocess.Popen(
-            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:"+str(self.soft_timeout), self.sample],
+            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:"+str(int(self.soft_timeout)), self.sample],
             env={
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",
-                "WINEDEBUG": "trace+ole,wininet,winhttp,shell,winsock",
+                #"WINEDEBUG": "trace+module,imports",
                 "USER": self.WINE_USER
             },
             stdout=subprocess.PIPE,

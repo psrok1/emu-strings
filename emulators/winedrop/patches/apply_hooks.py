@@ -95,6 +95,9 @@ class WSHInstrumentation(object):
         # Fix data directory and finish!
         self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].VirtualAddress = rva_imports
         self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].Size += 20
+        # Fix SizeOfImage
+        sizeOfImage = self.last_section.VirtualAddress + self.last_section.SizeOfRawData
+        self.pe.OPTIONAL_HEADER.SizeOfImage = sizeOfImage + (4096 - sizeOfImage % 4096)
         # Return IAT entries for each imported routine
         return rva_iat
     
@@ -109,7 +112,7 @@ class WSHInstrumentation(object):
             c
         We will swap last two elements:
             callee_ptr
-            fn_ptr
+            fn_ptr+2
             a
             b
             c
@@ -117,17 +120,17 @@ class WSHInstrumentation(object):
         """
         tramp_code = ''.join([
             "\x58",                  # pop eax
+            "\x83\xc0\x02",          # add eax, 2
             "\x87\x04\x24",          # xchg [esp], eax
             "\x50",                  # push eax
             "\xe8\x00\x00\x00\x00",  # call $+5
             "\x5a",                  # pop edx
             "\xff\xa2"               # jmp [edx+...]
         ])
-
-        tramp_size = len(tramp_code)+4
+        tramp_edx = len(tramp_code)-3
         tramp_rva = []
         for va in iat:
-            tramp_rva.append(self.append(tramp_code+p32((va-(self.next_rva()+tramp_size-1)))))
+            tramp_rva.append(self.append(tramp_code+p32((va-(self.next_rva()+tramp_edx)))))
             self.align(16, '\xcc')
         self.align(0x200)
         return tramp_rva

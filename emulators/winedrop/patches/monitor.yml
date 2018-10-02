@@ -1,2 +1,6 @@
 cscript.exe:
   "?Quit@CHostObj@@UAGJH@Z": hook_IgnoreQuit
+jscript.dll:
+  "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@2PAPAVNameList@@@Z": hook_ParseSource  
+vbscript.dll:
+  "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_ParseSource

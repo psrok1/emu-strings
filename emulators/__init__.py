@@ -26,7 +26,7 @@ class Emulator(object):
         self.env = {
             "SOFT_TIMEOUT": opts.get("soft_timeout", 60.0),
             "HARD_TIMEOUT": opts.get("hard_timeout", 90.0),
-            "SAMPLE": os.path.join("/opt/analysis", anal.sample_file),
+            "SAMPLE": anal.sample_file,
             "ENGINE": str(anal.engine)
         }
 
