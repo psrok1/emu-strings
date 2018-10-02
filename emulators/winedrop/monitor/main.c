@@ -1,5 +1,7 @@
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "log.h"
 
 #ifndef __stdcall
 #define __stdcall __attribute__((stdcall))
@@ -11,7 +13,7 @@
 
 int __stdcall hook_IgnoreQuit(void* original, void* this, int exitCode)
 {
-    printf("Tried to WScript.Quit()\n");
+    log_send("notice", "WScript.Quit called with exit code %u - ignored", exitCode);
     return 1;
 }
 
@@ -21,7 +23,7 @@ int __stdcall hook_IgnoreSleep(fn_CHostObj_Sleep original, void* this, unsigned 
 {
     if (msSleep >= 2000)
     {
-        printf("Ignored sleep %d ms, waiting 500ms!\n");
+        log_send("notice", "WScript.Sleep called with %u ms - waiting only 500ms", msSleep);
         msSleep = 500;
     }
     return original(this, msSleep);
@@ -41,8 +43,19 @@ int __thiscall hook_ParseSource(void* this, fn_ParseSource original,
                                void *a8, 
                                void *a9)
 {
-    printf("=== Code start\n");
-    printf("%ls\n", code);
-    printf("=== Code end\n");
+    log_send("snippet", "%ls", code);
     return original(this, execBody, oleScript, code, a4, a5, a6, a7, a8, a9);
+}
+
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDLL,  // handle to DLL module
+    DWORD fdwReason,     // reason for calling function
+    LPVOID lpReserved )  // reserved
+{
+    if(fdwReason == DLL_PROCESS_ATTACH)
+    {
+        log_init();
+        log_send("init", "Hello");
+    }
+    return TRUE;  // Successful DLL_PROCESS_ATTACH.
 }
