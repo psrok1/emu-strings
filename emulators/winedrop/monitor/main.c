@@ -50,7 +50,7 @@ int __stdcall hook_ConcatStrs(fn_ConcatStrs original, PVARStr dest, PVARStr s1, 
     int retval = original(dest, s1, s2);
     wchar_t* first = wnewstrcpy(s1->str, VARStr_length(s1));
     wchar_t* second = wnewstrcpy(s2->str, VARStr_length(s2));
-    log_send("notice", "Concatenated strings - '%ls'+'%ls'", first, second);
+    log_send("string", "%u:%u:%ls%ls", VARStr_length(s1), VARStr_length(s2), first, second);
     free(first);
     free(second);
     return retval;
@@ -63,8 +63,9 @@ int __thiscall hook_ScanStringConstant(PScanner this,
                                        unsigned int chStr)
 {
     int len, retval = original(this, chStr);
-    wchar_t* token = wnewstrcpy(this->token_start+1, this->token_end - this->token_start - 2);    
-    log_send("string", "%ls", token);
+    len = this->token_end - this->token_start - 2;
+    wchar_t* token = wnewstrcpy(this->token_start+1, len);
+    log_send("string", "%u:0:%ls",len,token);
     free(token);
     return retval;
 }

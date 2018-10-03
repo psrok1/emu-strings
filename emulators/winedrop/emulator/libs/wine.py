@@ -33,7 +33,11 @@ class WineLauncher(object):
         elif channel == "notice":
             log.info(msg)
         elif channel == "string":
-            log.info("string found: '{}'".format(msg))
+            alen, blen, strs = msg.split(":", 2)
+            alen, blen = map(int, [alen, blen])
+            astr = strs[:alen]
+            bstr = strs[alen:alen+blen]
+            self.report.report_string(astr+bstr, components=None if not bstr else [astr, bstr])
 
     def handle_execution(self, proc):
         def reader(pipe, queue):
