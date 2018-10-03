@@ -35,7 +35,8 @@ void log_send(const char* channel, const char* fmt, ...)
     encoded = malloc(encoded_size);
     base64encode(buffer, buf_size, encoded, encoded_size);
 
-    printf("*$winedrop%08X:%s:%s$*", L_MAGIC, channel, encoded);
+    printf("\n*$winedrop%08X:%s:%s:$*\n", L_MAGIC, channel, encoded);
+
     free(encoded);
     free(buffer);
     va_end(args);

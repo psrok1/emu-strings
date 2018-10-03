@@ -1,4 +1,6 @@
+import hashlib
 import json
+import os
 
 
 class Report(object):
@@ -9,7 +11,13 @@ class Report(object):
         self.strings = set()
 
     def report_snippet(self, snippet):
-        self.snippets.add(snippet)
+        h = hashlib.sha256(snippet).hexdigest()
+        if not os.path.isdir("snippets"):
+            os.mkdir("snippets")
+        if h not in self.snippets:
+            with open("snippets/{}".format(h), "wb") as f:
+                f.write(snippet)
+            self.snippets.add(h)
 
     def report_url(self, url):
         self.urls.add(url)
