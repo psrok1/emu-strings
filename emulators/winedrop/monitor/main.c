@@ -32,7 +32,7 @@ typedef struct {
 
 int VARStr_length(PVARStr var)
 {
-    return ((unsigned int*)var->str)[-1];
+    return ((unsigned int*)var->str)[-1]/2;
 }
 
 wchar_t* wnewstrcpy(wchar_t* src, int len)

@@ -37,7 +37,8 @@ class WineLauncher(object):
             alen, blen = map(int, [alen, blen])
             astr = strs[:alen]
             bstr = strs[alen:alen+blen]
-            self.report.report_string(astr+bstr, components=None if not bstr else [astr, bstr])
+            print (alen, blen, strs)
+            self.report.report_string(astr+bstr, components=(None if not bstr else [astr, bstr]))
 
     def handle_execution(self, proc):
         def reader(pipe, queue):
