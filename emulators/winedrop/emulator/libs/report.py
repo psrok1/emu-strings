@@ -26,7 +26,6 @@ class Report(object):
         self.dns_reqs.add((qname, qtype))
 
     def report_string(self, string, components=None):
-        print (string, components)
         # Merge strings if they're part of concatenation
         if components is not None:
             for comp in components:

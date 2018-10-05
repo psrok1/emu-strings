@@ -37,7 +37,6 @@ class WineLauncher(object):
             alen, blen = map(int, [alen, blen])
             astr = strs[:alen]
             bstr = strs[alen:alen+blen]
-            print (alen, blen, strs)
             self.report.report_string(astr+bstr, components=(None if not bstr else [astr, bstr]))
 
     def handle_execution(self, proc):
@@ -63,7 +62,6 @@ class WineLauncher(object):
                     continue
                 source, msg = element
                 if source == proc.stdout:
-                    print msg
                     if msg.startswith(self.lmagic):
                         try:
                             magic, channel, message, terminator = msg.strip().split(":",3)
@@ -77,7 +75,6 @@ class WineLauncher(object):
                     else:
                         stdout.write(msg)
                 elif source == proc.stderr:
-                    print msg
                     wine.write(msg)
         finally:
             wine.close()
