@@ -34,4 +34,4 @@ class WinedropEmulator(Emulator):
         Returns list of paths relative to workdir to code snippets
         """
         report = self._load_report()
-        return map(lambda h: (h, os.path.join(self.workdir, "snippets", h), report["snippets"])
+        return map(lambda h: (h, os.path.join(self.workdir, "snippets", h)), report["snippets"])

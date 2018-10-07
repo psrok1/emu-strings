@@ -67,8 +67,8 @@ class Analysis(object):
                 raise Exception("Analysis {} doesn't contain valid sample file!".format(aid))
 
     @staticmethod
-    def find_analysis(self, code, engine):
-        entry = self.db_collection().find_one({
+    def find_analysis(code, engine):
+        entry = Analysis.db_collection().find_one({
             "sha256": hashlib.sha256(code).hexdigest(),
             "engine": str(engine)})
         if entry is None:
@@ -91,6 +91,7 @@ class Analysis(object):
             }
         }
         self.code = code
+        self.engine = engines.Engine.get(engine)
         self.sample_file = "{}.{}".format(params["$set"]["sha256"], self.engine.EXTENSION)
         params["$set"]["filename"] = filename or self.sample_file
         self.db_collection().update({"aid": self.aid}, params)
@@ -114,31 +115,34 @@ class Analysis(object):
         
         for emulator in emulators:
             strs = emulator.strings()
-            strings += filter(lambda s: 3<len(s)<128 and all(map(lambda c: c in printable, s)), strs)
+            strings = strings.union(set(filter(lambda s: 3<len(s)<128 and all(map(lambda c: c in printable, s)), strs)))
             snippets.update({hashlib.sha256(snip).hexdigest(): {"code": snip} 
                             for snip in filter(lambda s: len(s)>=128, strings)})
             snippets.update({snip[0]: {"path": snip[1]} for snip in emulator.snippets()})
         
-        with open(os.path.join(self.workdir, "strings.txt")) as f:
+        with open(os.path.join(self.workdir, "strings.txt"), "w") as f:
             f.write('\n'.join(list(strings)))
         
         for h, snip in snippets.iteritems():
             if "path" in snip:
                 snippet_path = os.path.abspath(snip["path"])
                 symlink_path = os.path.abspath(snippets_dir)
-                os.symlink(os.path.join(snippets_dir, h), os.path.relpath(snippet_path, symlink_path))
+                relpath = os.path.relpath(snippet_path, symlink_path)
+                print relpath
+                os.symlink(relpath, os.path.join(snippets_dir, h))
             if "code" in snip:
                 with open(os.path.join(snippets_dir, h), "wb") as f:
                     f.write(snip["code"])
         
     def start(self, docker_client, opts=None):
         opts = opts or {}
-        if not self.empty:
+        if self.empty:
             raise Exception("Sample must be added")
         self.set_status(Analysis.STATUS_IN_PROGRESS)
         try:
             emus = [emu_cls(self.code, self.engine, **opts) for emu_cls in emulators.get_emulators(self.engine)]
             for emu in emus:
+                print "Started in {}".format(emu.__class__.__name__)
                 emu.start(docker_client)
             for emu in emus:
                 emu.join()

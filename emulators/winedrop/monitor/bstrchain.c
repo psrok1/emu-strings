@@ -74,4 +74,9 @@ void chain_AddString(wchar_t* dest, wchar_t* s1, wchar_t* s2)
     chain_first = BStr_copy(s1);
     chain_second = BStr_copy(s2);
     chain_last_dest = dest;
+    // For long strings concatenation we'll get better results if we report them immediately
+    if(BStr_length(chain_first) >= 3 && BStr_length(chain_second) >= 3)
+    {
+        chain_Flush();
+    }
 }

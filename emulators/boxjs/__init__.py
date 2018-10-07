@@ -43,7 +43,7 @@ class BoxJSEmulator(Emulator):
         """
         Returns list of strings found during emulation
         """
-        return list(set(self._get_urls() + list(self._get_IOCs)))
+        return list(set(self._get_urls() + list(self._get_IOCs())))
 
     def _snippets(self):
         snippets_path = self._local_path("snippets.json")
@@ -52,7 +52,7 @@ class BoxJSEmulator(Emulator):
         with open(snippets_path) as f:
             snippets = json.load(f)
         for snip in snippets.keys():
-            with open(self._local_path(snip), "rb"):
+            with open(self._local_path(snip), "rb") as f:
                 h = hashlib.sha256(f.read()).hexdigest()
             yield (h, os.path.join(self.workdir, "results", snip))
     
