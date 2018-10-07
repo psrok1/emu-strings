@@ -10,11 +10,6 @@ import emulators.analysis
 app = Flask("winedrop")
 
 
-@app.route("/api/capabilities", methods=["GET"])
-def get_capabilities():
-    return jsonify(emulators.get_capabilities())
-
-
 @app.route("/api/analysis/<aid>")
 def get_analysis(aid):
     db = emulators.analysis.Analysis.db_collection()
@@ -22,14 +17,6 @@ def get_analysis(aid):
     if entry is None:
         return "{}"
     return jsonify(entry)
-
-
-@app.route("/api/list/")
-@app.route("/api/list/<soffs>")
-def get_analysis_list(soffs=0):
-    db = emulators.analysis.Analysis.db_collection()
-    entries = list(db.find().sort([("timestamp", -1)]).skip(soffs).limit(30))
-    return jsonify(entries)
 
 
 @app.route("/api/submit", methods=["POST"])
@@ -40,19 +27,20 @@ def submit_analysis():
             raise Exception("File not specified")
 
         engine = request.form["engine"]
-        emulator = request.form["emulator"]
-
-        # Create analysis
-        analysis = emulators.analysis.Analysis()
         # Create StringIO pseudo-file and store file from request
         strfd = StringIO.StringIO()
         file.save(strfd)
         # Add sample to analysis
-        analysis.add_sample(strfd.getvalue(), engine, filename=file.filename)
-        # Bind specified emulator
-        analysis.bind_emulator(emulator)
-        # Spawn task to daemon
-        daemon.analyze_sample.apply_async((str(analysis.aid), request.form))
+        code = strfd.getvalue()
+        # Try to find existing analysis
+        analysis = emulators.analysis.Analysis.find_analysis(code, engine)
+        if analysis is None:
+            # Create new analysis
+            analysis = emulators.analysis.Analysis()
+            # Add sample code to analysis
+            analysis.add_sample(code, engine, filename=file.filename)
+            # Spawn task to daemon
+            daemon.analyze_sample.apply_async((str(analysis.aid), request.form))
         # Return analysis id
         return jsonify({"aid": str(analysis.aid)})
     except Exception as e:

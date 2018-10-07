@@ -17,7 +17,6 @@ log = logging.getLogger("winedrop.wine")
 class WineLauncher(object):
     WINE_EXEC = os.getenv("WINE")
     WINE_PREFIX = os.getenv("WINEPREFIX")
-    WINE_USER = "winedrop"
 
     def __init__(self):
         self.report = report.Report()
@@ -26,6 +25,11 @@ class WineLauncher(object):
         self.sample = os.getenv("SAMPLE")
         self.engine = os.getenv("ENGINE")
         self.lmagic = "*$winedrop"
+
+    def get_user(self):
+        userpath = "/opt/.username"
+        with open(userpath) as f:
+            return f.read().strip()
 
     def handle_log(self, channel, msg):
         if channel == "snippet":
@@ -80,7 +84,6 @@ class WineLauncher(object):
             wine.close()
             stdout.close()
         return True
-        
 
     def analyze_script(self):
         timeout = gevent.Timeout(self.hard_timeout)
@@ -93,7 +96,7 @@ class WineLauncher(object):
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",
                 #"WINEDEBUG": "trace+module,imports",
-                "USER": self.WINE_USER
+                "USER": self.get_user()
             },
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)

@@ -14,6 +14,4 @@ docker_client = docker.from_env()
 @celery_app.task(ignore_result=True)
 def analyze_sample(aid, opts):
     analysis = Analysis(aid)
-    ScriptHostEmulator = analysis.emulator_class
-    emulator = ScriptHostEmulator(analysis, **opts)
-    emulator.start(docker_client)
+    analysis.start(docker_client, opts)

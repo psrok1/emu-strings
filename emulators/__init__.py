@@ -1,6 +1,11 @@
+import hashlib
 import os
 import pkgutil
+import uuid
 
+import engines
+
+from config import StorageConfig
 from emulators.analysis import Analysis
 
 
@@ -16,18 +21,38 @@ class Emulator(object):
     SUPPORTED_ENGINES = []
     IMAGE_NAME = ""
 
-    def __init__(self, anal, **opts):
+    @property
+    def workdir(self):
         """
-        Creates Emulator instance with bound Analysis and additional runtime opts
+        Getter for emulator working dir (mounted in container during emulation)
+        """
+        return os.path.join(StorageConfig.EMULATION_PATH, str(self.emuid))
+
+    def __init__(self, code, engine, **opts):
+        """
+        Creates Emulator instance with additional runtime opts
 
         Supported opts: soft_timeout, hard_timeout
         """
-        self.analysis = anal
+        self.engine = engines.Engine.get(engine)
+        if not self.is_supported(self.engine):
+            raise Exception("Engine {} is not supported by {} emulator".format(self.engine, self.__class__.__name__))
+        self.container = None
+
+        self.emuid = str(uuid.uuid4())
+        os.makedirs(self.workdir)
+
+        sha256 = hashlib.sha256(code).hexdigest()
+        self.sample_file = "{}.{}".format(sha256, self.engine.EXTENSION)
+        # Add sample to emulation folder
+        with open(os.path.join(self.workdir, self.sample_file), "wb") as f:
+            f.write(code)
+
         self.env = {
             "SOFT_TIMEOUT": opts.get("soft_timeout", 60.0),
             "HARD_TIMEOUT": opts.get("hard_timeout", 90.0),
-            "SAMPLE": anal.sample_file,
-            "ENGINE": str(anal.engine)
+            "SAMPLE": self.sample_file,
+            "ENGINE": str(self.engine)
         }
 
     @classmethod
@@ -42,48 +67,40 @@ class Emulator(object):
         """
         Starts analysis using emulator
         """
-        print "Task started"
-        container = None
-        try:
-            container = docker_client.containers.run(
-                self.IMAGE_NAME,
-                detach=True,
-                dns=['127.0.0.1'],
-                network_mode="none",
-                environment=self.env,
-                volumes={
-                    os.path.abspath(self.analysis.workdir): {
-                        "bind": "/opt/analysis",
-                        "mode": "rw"
-                    }
+        self.container = docker_client.containers.run(
+            self.IMAGE_NAME,
+            detach=True,
+            dns=['127.0.0.1'],
+            network_mode="none",
+            environment=self.env,
+            volumes={
+                os.path.abspath(self.workdir): {
+                    "bind": "/opt/analysis",
+                    "mode": "rw"
                 }
-            )
-            self.analysis.set_status(Analysis.STATUS_IN_PROGRESS)
-            for log in container.logs(stream=True):
-                print log
-            if container.wait()["StatusCode"] == 0:
-                print "Task succeeded"
-                self.analysis.set_status(Analysis.STATUS_SUCCESS)
-                self._report()
-            else:
-                print "Task failed"
-                self.analysis.set_status(Analysis.STATUS_FAILED)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            if analysis:
-                self.analysis.set_status(Analysis.STATUS_FAILED)
-            raise e
-        finally:
-            if container is not None:
-                container.remove()
+            }
+        )
 
-    def _report(self):
+    def join(self):
+        try:
+            for log in self.container.logs(stream=True):
+                print log
+            return self.container.wait()["StatusCode"] == 0
+        finally:
+            if self.container is not None:
+                self.container.remove()
+
+    def strings(self):
         """
-        Creates file with summary information from emulator-dependent artifacts.
-        Called by Emulator.start()
+        Returns list of strings found during emulation
         """
-        return
+        return []
+
+    def snippets(self):
+        """
+        Returns list of tuples (hash, path) for code snippets
+        """
+        return []
 
 # Preloading all plugin submodules
 __all__ = []
@@ -93,12 +110,5 @@ for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
     exec('%s = module' % module_name)
 
 
-def get_emulator_class(emulator_name):
-    emulator_class = {emucls.__name__: emucls for emucls in Emulator.__subclasses__()}.get(emulator_name)
-    if emulator_class is None:
-        raise Exception("Emulator {} not installed".format(emulator_name))
-    return emulator_class
-
-
-def get_capabilities():
-    return {emucls.__name__: map(str, emucls.SUPPORTED_ENGINES) for emucls in Emulator.__subclasses__()}
+def get_emulators(engine_name):
+    return [emucls for emucls in Emulator.__subclasses__() if emucls.is_supported(engine_name)]

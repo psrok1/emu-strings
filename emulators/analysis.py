@@ -46,8 +46,7 @@ class Analysis(object):
         """
         Creates new analysis (with unique id) or gets instance of existing one
         """
-        self.sample_file = self.engine = self.emulator_class = None
-        self.container = None
+        self.sample_file = self.engine = None
         self.status = None
         if aid is None:
             self.aid = str(uuid.uuid4())
@@ -62,10 +61,19 @@ class Analysis(object):
                 self.status = params["status"]
                 self.engine = engines.Engine.get(params["engine"])
                 self.sample_file = "{}.{}".format(params["sha256"], self.engine.EXTENSION)
-                if "emulator" in params:
-                    self.emulator_class = emulators.get_emulator_class(params["emulator"])
+                with open(os.path.join(self.workdir, self.sample_file), "rb") as f:
+                    self.code = f.read()
             except IndexError:
                 raise Exception("Analysis {} doesn't contain valid sample file!".format(aid))
+
+    @staticmethod
+    def find_analysis(self, code, engine):
+        entry = self.db_collection().find_one({
+            "sha256": hashlib.sha256(code).hexdigest(),
+            "engine": str(engine)})
+        if entry is None:
+            return None
+        return Analysis(aid=entry["aid"])
 
     def add_sample(self, code, engine, filename=None):
         """
@@ -73,7 +81,6 @@ class Analysis(object):
         """
         if not self.empty:
             raise Exception("Sample is added yet!")
-        self.engine = engines.Engine.get(engine)
         params = {
             "$set": {
                 "md5": hashlib.md5(code).hexdigest(),
@@ -83,32 +90,12 @@ class Analysis(object):
                 "engine": str(engine)
             }
         }
+        self.code = code
         self.sample_file = "{}.{}".format(params["$set"]["sha256"], self.engine.EXTENSION)
         params["$set"]["filename"] = filename or self.sample_file
         self.db_collection().update({"aid": self.aid}, params)
-        # Add sample to analysis folder
         with open(os.path.join(self.workdir, self.sample_file), "wb") as f:
             f.write(code)
-
-    def bind_emulator(self, emulator):
-        """
-        Binds emulator class with current analysis context (sample must have been added before).
-        """
-        if self.empty:
-            raise Exception("Sample is not added yet!")
-        emulator_cls = emulators.get_emulator_class(emulator)
-        if not emulator_cls.is_supported(self.engine):
-            raise Exception("{} is not supported by {} emulator".format(str(self.engine),
-                                                                        emulator_cls.__name__))
-
-        self.emulator_class = emulator_cls
-
-        params = {
-            "$set": {
-                "emulator": emulator_cls.__name__
-            }
-        }
-        self.db_collection().update({"aid": self.aid}, params)
 
     def set_status(self, status):
         """
@@ -116,3 +103,48 @@ class Analysis(object):
         """
         self.db_collection().update({"aid": self.aid}, {"$set": {"status": status}})
         self.status = status
+
+    def handle_results(self, emulators):
+        printable = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t'
+        snippets_dir = os.path.join(self.workdir, "snippets")
+
+        os.makedirs(snippets_dir)
+        strings = set()
+        snippets = dict()
+        
+        for emulator in emulators:
+            strs = emulator.strings()
+            strings += filter(lambda s: 3<len(s)<128 and all(map(lambda c: c in printable, s)), strs)
+            snippets.update({hashlib.sha256(snip).hexdigest(): {"code": snip} 
+                            for snip in filter(lambda s: len(s)>=128, strings)})
+            snippets.update({snip[0]: {"path": snip[1]} for snip in emulator.snippets()})
+        
+        with open(os.path.join(self.workdir, "strings.txt")) as f:
+            f.write('\n'.join(list(strings)))
+        
+        for h, snip in snippets.iteritems():
+            if "path" in snip:
+                snippet_path = os.path.abspath(snip["path"])
+                symlink_path = os.path.abspath(snippets_dir)
+                os.symlink(os.path.join(snippets_dir, h), os.path.relpath(snippet_path, symlink_path))
+            if "code" in snip:
+                with open(os.path.join(snippets_dir, h), "wb") as f:
+                    f.write(snip["code"])
+        
+    def start(self, docker_client, opts=None):
+        opts = opts or {}
+        if not self.empty:
+            raise Exception("Sample must be added")
+        self.set_status(Analysis.STATUS_IN_PROGRESS)
+        try:
+            emus = [emu_cls(self.code, self.engine, **opts) for emu_cls in emulators.get_emulators(self.engine)]
+            for emu in emus:
+                emu.start(docker_client)
+            for emu in emus:
+                emu.join()
+            self.handle_results(emus)
+            self.set_status(Analysis.STATUS_SUCCESS)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.set_status(Analysis.STATUS_FAILED)

@@ -9,5 +9,5 @@ class MongoConfig(object):
 
 
 class StorageConfig(object):
-    ANALYSIS_PATH = "./analysis/"
-
+    ANALYSIS_PATH = "./results/analysis/"
+    EMULATION_PATH = "./results/emulation/"
