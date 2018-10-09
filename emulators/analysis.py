@@ -16,8 +16,8 @@ class Analysis(object):
     Analysis instance
     """
     STATUS_PENDING = 0
-    STATUS_SUCCESS = 1
-    STATUS_IN_PROGRESS = 2
+    STATUS_IN_PROGRESS = 1
+    STATUS_SUCCESS = 2
     STATUS_FAILED = 3
     STATUS_ORPHANED = 255
 
@@ -59,12 +59,26 @@ class Analysis(object):
             try:
                 params = self.db_collection().find_one({"aid": aid})
                 self.status = params["status"]
+                self.timestamp = params["timestamp"]
                 self.engine = engines.Engine.get(params["engine"])
                 self.sample_file = "{}.{}".format(params["sha256"], self.engine.EXTENSION)
                 with open(os.path.join(self.workdir, self.sample_file), "rb") as f:
                     self.code = f.read()
             except IndexError:
                 raise Exception("Analysis {} doesn't contain valid sample file!".format(aid))
+
+    def results(self):
+        spath = os.path.join(self.workdir, "strings.txt")
+        strings = ""
+        if os.path.isfile(spath):
+            with open(spath, "r") as f:
+                strings = f.read()
+        return {
+            "status": self.status,
+            "timestamp": self.timestamp,
+            "sample": self.sample_file,
+            "strings": strings
+        }
 
     @staticmethod
     def find_analysis(code, engine):
@@ -74,6 +88,14 @@ class Analysis(object):
         if entry is None:
             return None
         return Analysis(aid=entry["aid"])
+
+    @staticmethod
+    def get_analysis(aid):
+        entry = Analysis.db_collection().find_one({
+            "aid": aid})
+        if entry is None:
+            return None
+        return Analysis(aid=aid)
 
     def add_sample(self, code, engine, filename=None):
         """

@@ -57,3 +57,22 @@ body {
   border-radius: 5px;
   margin-bottom: 4pt;
 }
+
+img.logo {
+  margin-bottom: 8pt;
+}
+
+.results, .hourglass {
+  width: 100%;
+  max-width: 700px;
+  height: 400px;
+  margin: auto;
+}
+
+pre.strings {
+  text-align: left;
+  padding: 8pt;
+  background-color: #334;
+  color: white;
+  height: 400px;
+}

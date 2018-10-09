@@ -7,27 +7,15 @@ import daemon
 import emulators
 import emulators.analysis
 
-app = Flask("winedrop")
+app = Flask("winedrop", static_folder=os.path.abspath('./web/build'))
 
 
 @app.route("/api/analysis/<aid>")
 def get_analysis(aid):
-    db = emulators.analysis.Analysis.db_collection()
-    entry = db.find_one({"aid": aid})
+    entry = emulators.analysis.Analysis.get_analysis(aid)
     if entry is None:
         return "{}"
-    del entry["_id"]
-    return jsonify(entry)
-
-
-@app.route("/api/analysis/<aid>/strings")
-def get_strings(aid):
-    pass
-
-
-@app.route("/api/analysis/<aid>/snippet/<sid>")
-def get_snippet(aid, sid):
-    pass
+    return jsonify(entry.results())
 
 
 @app.route("/api/submit", methods=["POST"])
@@ -44,8 +32,8 @@ def submit_analysis():
         # Add sample to analysis
         code = strfd.getvalue()
         # Try to find existing analysis
-        #analysis = emulators.analysis.Analysis.find_analysis(code, engine)
-        analysis=None
+        analysis = emulators.analysis.Analysis.find_analysis(code, engine)
+        #analysis=None
         if analysis is None:
             # Create new analysis
             analysis = emulators.analysis.Analysis()
@@ -59,6 +47,15 @@ def submit_analysis():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)})
+
+@app.errorhandler(404)
+def page_not_found(s):
+    return app.send_static_file("index.html")
+
+@app.route('/')
+@app.route('/<path:path>')
+def send_files(path='index.html'):
+    return app.send_static_file(path)
 
 if __name__ == '__main__':
     app.run()

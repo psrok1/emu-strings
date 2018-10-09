@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
 import Dropzone from 'react-dropzone'
+import axios from 'axios';
+
+import { withRouter } from "react-router-dom";
+
 
 
 class UploadForm extends Component {
@@ -30,8 +34,13 @@ class UploadForm extends Component {
 
     handleSubmit(ev) {
         ev.preventDefault();
-        if(this.props.onSubmit)
-            this.props.onSubmit(this.state.fileSelected, this.state.engine);
+        let form = new FormData();
+        form.set('engine', this.state.engine)
+        form.set('file', this.state.fileSelected)
+        axios.post("/api/submit", form)
+             .then(response => {
+                 this.props.history.push(`/analysis/${response.data.aid}`);
+             })
     }
   
     render() {
@@ -59,4 +68,4 @@ class UploadForm extends Component {
     }
 }
 
-export default UploadForm;
+export default withRouter(UploadForm);
