@@ -55,6 +55,7 @@ class AnalysisView extends Component {
         axios.get(`/api/analysis/${this.props.match.params.aid}`)
              .then(response => {
                  let analysis = response.data;
+                 console.log(analysis);
                  if(!analysis.status)
                  {
                      this.setState({"error": "Analysis not found"})
@@ -76,14 +77,17 @@ class AnalysisView extends Component {
                  else if(analysis.status === STATUS_FAILED)
                  {
                      this.setState({"error": "Analysis failed"})
+                 } else {
+                    this.setState({"error": "Internal error"})
                  }
              })
     }
 
     render() {
+        console.log(this.state)
         if(this.state.error)
             return <Hourglass hourglass={brokenglass} message={this.state.error} />
-        if(this.state.strings === undefined)
+        if(this.state.strings !== undefined)
             return <Strings>{this.state.strings}</Strings>
         return <Hourglass message={this.state.status || "Checking analysis status..."} />
     }
