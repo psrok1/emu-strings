@@ -83,7 +83,7 @@ class AnalysisView extends Component {
     render() {
         if(this.state.error)
             return <Hourglass hourglass={brokenglass} message={this.state.error} />
-        if(this.state.strings)
+        if(this.state.strings === undefined)
             return <Strings>{this.state.strings}</Strings>
         return <Hourglass message={this.state.status || "Checking analysis status..."} />
     }

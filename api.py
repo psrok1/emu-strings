@@ -58,4 +58,4 @@ def send_files(path='index.html'):
     return app.send_static_file(path)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=64205)
