@@ -4,3 +4,6 @@
 [submodule "emulators/boxjs/emulator/box-js"]
 	path = emulators/boxjs/emulator/box-js
 	url = https://github.com/CapacitorSet/box-js.git
+[submodule "emulators/winedrop/monitor/uthash"]
+	path = emulators/winedrop/monitor/uthash
+	url = https://github.com/troydhanson/uthash.git

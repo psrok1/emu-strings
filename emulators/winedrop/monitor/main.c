@@ -34,7 +34,9 @@ typedef int __stdcall (*fn_ConcatStrs)(PVARStr dest, PVARStr s1, PVARStr s2);
 int __stdcall hook_ConcatStrs(fn_ConcatStrs original, PVARStr dest, PVARStr s1, PVARStr s2)
 {
     int retval = original(dest, s1, s2);
-    chain_AddString(dest->val.var->val.str, s1->val.str, s2->val.str);
+    TBStr_add_from_var(dest->val.var->val.str);
+    TBStr_disable(s1->val.str);
+    TBStr_disable(s2->val.str);
     return retval;
 }
 
@@ -47,8 +49,33 @@ typedef PVARStr __stdcall (*fn_rtConcatBStr)(wchar_t *s1, wchar_t* s2);
 PVARStr __stdcall hook_rtConcatBStr(fn_rtConcatBStr original, wchar_t* s1, wchar_t* s2)
 {
     PVARStr retval = original(s1, s2);
-    chain_AddString(retval->val.str, s1, s2);
+    TBStr_add_from_var(retval->val.str);
+    TBStr_disable(s1);
+    TBStr_disable(s2);
     return retval;
+}
+
+/*** 
+ * JSCRIPT.DLL 
+ ***/
+
+typedef void __thiscall (*fn_VarClear)(PVARStr var);
+
+void __thiscall hook_VarClear(PVARStr var, fn_VarClear original)
+{
+    if((var->type & 0xFFFF) == 8)
+    {
+        TBStr_clear(var->val.str);
+    }
+    original(var);
+}
+
+typedef void __thiscall (*fn_VarSetConstBstr)(PVARStr var, wchar_t *str, void *dummy);
+
+void __thiscall hook_VarSetConstBstr(PVARStr var, fn_VarSetConstBstr original, wchar_t *str, void *dummy)
+{
+    original(var, str, dummy);
+    TBStr_add_from_const(str);
 }
 
 /*** 
@@ -64,9 +91,11 @@ int __thiscall hook_ScanStringConstant(PScanner this,
 {
     int len, retval = original(this, chStr);
     len = this->token_end - this->token_start - 2;
-    wchar_t* token = BStr_new(this->token_start+1, len);
-    log_send("string", "%u:0:%ls",len,token);
-    BStr_free(token);
+    if(len > 3)
+    {
+        wchar_t* token = BStr_new(this->token_start+1, len);
+        TBStr_scanned_const(token);
+    }
     return retval;
 }
 
@@ -76,7 +105,7 @@ int __thiscall hook_ScanStringConstant(PScanner this,
 
 int __stdcall hook_IgnoreQuit(void* original, void* this, int exitCode)
 {
-    log_send("notice", "WScript.Quit called with exit code %u - ignored", exitCode);
+    log_send('n', "WScript.Quit called with exit code %u - ignored", exitCode);
     return 1;
 }
 
@@ -90,7 +119,7 @@ int __stdcall hook_IgnoreSleep(fn_CHostObj_Sleep original, void* this, unsigned 
 {
     if (msSleep >= 2000)
     {
-        log_send("notice", "WScript.Sleep called with %u ms - waiting only 500ms", msSleep);
+        log_send('n', "WScript.Sleep called with %u ms - waiting only 500ms", msSleep);
         msSleep = 500;
     }
     return original(this, msSleep);
@@ -114,7 +143,7 @@ int __thiscall hook_jscript_ParseSource(void* this, fn_jscript_Parser_ParseSourc
                                void *a8, 
                                void *a9)
 {
-    log_send("snippet", "%ls", code);
+    log_send('c', "%ls", code);
     return original(this, execBody, oleScript, code, a4, a5, a6, a7, a8, a9);
 }
 
@@ -137,7 +166,7 @@ int __thiscall hook_vbscript_ParseSource(void* this, fn_vbscript_Parser_ParseSou
                                void *a9,
                                void *a10)
 {
-    log_send("snippet", "%ls", code);
+    log_send('c', "%ls", code);
     return original(this, execBody, oleScript, code, a4, a5, a6, a7, a8, a9, a10);
 }
 
@@ -153,11 +182,10 @@ BOOL WINAPI DllMain(
     if(fdwReason == DLL_PROCESS_ATTACH)
     {
         log_init();
-        log_send("init", "Hello");
-    } 
-    else if (fdwReason == DLL_PROCESS_DETACH)
+        log_send('n', "Monitor started");
+    } else if(fdwReason == DLL_PROCESS_DETACH)
     {
-        chain_Flush();
+        TBStr_dumpall();
     }
     
     return TRUE;  // Successful DLL_PROCESS_ATTACH.

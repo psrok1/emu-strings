@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "base64.h"
+#include <unistd.h>
+
+#define MAX_CHUNK_LEN 1024
 
 unsigned int L_MAGIC = 0xf00ca11;
 
@@ -18,26 +20,37 @@ void log_init() {
     CryptReleaseContext(hProv, 0);
 }
 
-void log_send(const char* channel, const char* fmt, ...)
+void log_send_raw(const char* data, unsigned int length)
+{
+    char buffer[2048], preflen = 0;
+    preflen = snprintf(buffer, 2048, "\n*$wdrop%08X:%u:", L_MAGIC, length);
+    memcpy(buffer + preflen, data, length);
+    write(1, buffer, preflen + length);
+}
+
+void log_send(char type, const char* fmt, ...)
 {
     va_list args;
     size_t buf_size, encoded_size;
-    char* buffer;
+    char* buffer, *pbuf;
     char* encoded;
 
     va_start(args, fmt);
 
     buf_size = vsnprintf(NULL, 0, fmt, args);
-    buffer = malloc(buf_size);
-    vsnprintf(buffer, buf_size, fmt, args);
+    pbuf = buffer = malloc(buf_size + 1);
+    vsnprintf(buffer + 1, buf_size, fmt, args);
 
-    encoded_size = buf_size*4/3 + 16;
-    encoded = malloc(encoded_size);
-    base64encode(buffer, buf_size, encoded, encoded_size);
+    while(buf_size > MAX_CHUNK_LEN)
+    {
+        *pbuf = 'p';
+        log_send_raw(pbuf, MAX_CHUNK_LEN + 1);
+        buf_size -= MAX_CHUNK_LEN;
+        pbuf += MAX_CHUNK_LEN;
+    }
+    *pbuf = type;
 
-    printf("\n*$winedrop%08X:%s:%s:$*\n", L_MAGIC, channel, encoded);
-
-    free(encoded);
+    log_send_raw(pbuf, buf_size + 1);
     free(buffer);
     va_end(args);
 }

@@ -3,6 +3,13 @@
 #include "log.h"
 #include "bstrchain.h"
 
+/**
+ * BStr format:
+ * [4-byte length][wide string]
+ * ^              ^ BStr
+ * \---BStrPtr
+ */
+
 wchar_t* BStrPtr_to_BStr(void* ptr) {
     return (wchar_t*)(((char*)ptr) + 4);
 }
@@ -37,46 +44,155 @@ wchar_t* BStr_free(wchar_t* bstr)
     free(BStr_to_BStrPtr(bstr));
 }
 
-
-wchar_t* chain_last_dest = NULL;
-wchar_t* chain_first = NULL, *chain_second = NULL;
-
-void chain_FreeBuffers()
+unsigned int BStr_hash(wchar_t* bstr)
 {
-    if(chain_first)
+    /* From jscript@CaseInsensitiveComputeHashCch */
+    unsigned int length = BStr_length(bstr);
+    unsigned int result = 0;
+    wchar_t* ptr = bstr;
+    wchar_t ch;
+    while(length > 0)
     {
-        BStr_free(chain_first);
-        chain_first = NULL;
+        ch = *(ptr++);
+        length -= 1;
+        if ((ch - 65) <= 25)
+            ch += 32;
+        result = ch + 17 * result;
     }
-    if(chain_second)
+    return result;
+}
+
+unsigned int CBStr_hash(wchar_t* bstr)
+{
+    return *(unsigned int*)(((char*)bstr) - 8);
+}
+
+BStrTracked* strings = NULL;
+ConstBStrTracked* consts = NULL;
+
+void TBStr_scanned_const(wchar_t* bstr)
+{
+    /* Should be copied via BStr_new */
+    ConstBStrTracked *s;
+
+    unsigned int hash = BStr_hash(bstr);
+
+    HASH_FIND_INT(consts, &hash, s);
+    if (s == NULL)
     {
-        BStr_free(chain_second);
-        chain_second = NULL;
+        s = (ConstBStrTracked*)malloc(sizeof *s);
+        s->chash = hash;
+        s->cstr = bstr;
+        s->flags = TRACKED_ENABLED;
+        HASH_ADD_INT( consts, chash, s );
     }
 }
 
-void chain_Flush() {
-    if(chain_first && chain_second)
+void TBStr_add(wchar_t* bstr, unsigned int flags)
+{
+    /* Handling dynamic or unbound strings */
+    BStrTracked * s;
+
+    if(BStr_length(bstr) <= 3)
+        return;
+
+
+    HASH_FIND_INT(strings, &bstr, s);
+    if (s == NULL) 
     {
-        chain_last_dest = NULL;
-        log_send("string", "%u:%u:%ls%ls", BStr_length(chain_first), BStr_length(chain_second), chain_first, chain_second);
+        s = (BStrTracked*)malloc(sizeof *s);
+        s->ptr = bstr;
+        s->flags = flags;
+        HASH_ADD_INT( strings, ptr, s );
     }
-    chain_FreeBuffers();
 }
 
-void chain_AddString(wchar_t* dest, wchar_t* s1, wchar_t* s2)
+void TBStr_add_from_var(wchar_t* bstr)
 {
-    if(chain_last_dest && chain_last_dest != s1)
+    TBStr_add(bstr, TRACKED_ENABLED);
+}
+
+
+void TBStr_add_from_const(wchar_t* cbstr)
+{
+    /**
+     * CBStr format:
+     * [4-byte hash][4-byte length][wide string]
+     *                             ^
+     *                              --- BStr pointer
+     */
+    TBStr_add(cbstr, TRACKED_ENABLED | TRACKED_CONST);
+}
+
+void TBStr_disable(wchar_t* bstr)
+{
+    BStrTracked *s;
+    ConstBStrTracked *cs;
+
+    HASH_FIND_INT(strings, &bstr, s);
+    if (s != NULL)
     {
-        chain_Flush();
+        if(!(s->flags & TRACKED_ENABLED))
+            return;
+        s->flags &= ~TRACKED_ENABLED;
+        if(s->flags & TRACKED_CONST)
+        {
+            unsigned int hash;
+            hash = CBStr_hash(bstr);
+            HASH_FIND_INT(consts, &hash, cs);
+            if (cs != NULL)
+            {
+                cs->flags &= ~TRACKED_ENABLED;
+            }
+        }
     }
-    chain_FreeBuffers();
-    chain_first = BStr_copy(s1);
-    chain_second = BStr_copy(s2);
-    chain_last_dest = dest;
-    // For long strings concatenation we'll get better results if we report them immediately
-    if(BStr_length(chain_first) >= 3 && BStr_length(chain_second) >= 3)
+}
+
+void TBStr_clear(wchar_t* bstr)
+{
+    BStrTracked *s;
+    ConstBStrTracked *cs;
+    
+    HASH_FIND_INT(strings, &bstr, s);
+    if (s == NULL || (s->flags & TRACKED_ENABLED))
+        log_send('s', "%ls", bstr);
+    
+    if (s != NULL)
     {
-        chain_Flush();
+        if(s->flags & TRACKED_CONST)
+        {
+            unsigned int hash;
+            hash = CBStr_hash(bstr);
+            HASH_FIND_INT(consts, &hash, cs);
+            if (cs != NULL)
+            {
+                BStr_free(cs->cstr);
+                HASH_DEL(consts, cs);
+                free(cs);
+            }
+        }
+        HASH_DEL(strings, s);
+        free(s);
+    }
+}
+
+void TBStr_dumpall()
+{
+    BStrTracked *s, *stmp;
+    ConstBStrTracked *cs, *cstmp;
+
+    HASH_ITER(hh, strings, s, stmp) {
+        HASH_DEL(strings, s);
+        if((s->flags & TRACKED_ENABLED) && !(s->flags & TRACKED_CONST))
+            log_send('s', "%ls", s->ptr);
+        free(s);
+    }
+
+    HASH_ITER(hh, consts, cs, cstmp) {
+        HASH_DEL(consts, cs);
+        if(cs->flags & TRACKED_ENABLED)
+            log_send('s', "%ls", cs->cstr);
+        BStr_free(cs->cstr);
+        free(cs);
     }
 }

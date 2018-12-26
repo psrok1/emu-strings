@@ -5,6 +5,8 @@ jscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@2PAPAVNameList@@@Z": hook_jscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant
   '?ConcatStrs@@YGJPAVVAR@@00@Z': hook_ConcatStrs
+  "?Clear@VAR@@QAEXXZ": hook_VarClear
+  "?SetConstBstr@VAR@@QAEXPAGPAVExecBody@@@Z": hook_VarSetConstBstr
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant

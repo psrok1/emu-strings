@@ -33,7 +33,7 @@ def submit_analysis():
         code = strfd.getvalue()
         # Try to find existing analysis
         analysis = emulators.analysis.Analysis.find_analysis(code, engine)
-        #analysis=None
+        analysis = None
         if analysis is None:
             # Create new analysis
             analysis = emulators.analysis.Analysis()
