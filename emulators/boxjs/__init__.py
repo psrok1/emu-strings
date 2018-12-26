@@ -7,13 +7,10 @@ from emulators import engines
 
 
 class BoxJSEmulator(Emulator):
-    SUPPORTED_ENGINES = []
-    """
     SUPPORTED_ENGINES = [
         engines.JScript,
         engines.JScriptEncode,
     ]
-    """
     IMAGE_NAME = "boxjs"
 
     def _local_path(self, fname):
