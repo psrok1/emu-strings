@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "log.h"
 #include "bstrchain.h"
 
@@ -78,6 +79,28 @@ void __thiscall hook_VarSetConstBstr(PVARStr var, fn_VarSetConstBstr original, w
     TBStr_add_from_const(str);
 }
 
+// ?FInterrupt@CSession@@QAEHXZ
+
+unsigned int startTime = 0;
+
+typedef int __thiscall (*fn_SessionFInterrupt)(void* session);
+
+int __thiscall hook_SessionFInterrupt(void* session, fn_SessionFInterrupt original)
+{
+    if(startTime == 0)
+    {
+        startTime = time(NULL);
+    }
+    // Trying to force halt interrupt after 45 seconds
+    if(time(NULL) - startTime > 45)
+    {
+        log_send('n', "Enforcing shutdown after 45 seconds");
+        *((unsigned int*)(((char*)session)+0x248)) = 1;
+        *((unsigned int*)(((char*)session)+0x244)) = 0;
+        *((unsigned int*)(((char*)session)+0x4)) = 0;
+    }
+    return original(session);
+}
 /*** 
  * JSCRIPT.DLL 
  * VBSCRIPT.DLL
@@ -185,6 +208,7 @@ BOOL WINAPI DllMain(
         log_send('n', "Monitor started");
     } else if(fdwReason == DLL_PROCESS_DETACH)
     {
+        log_send('n', "Graceful shutdown");
         TBStr_dumpall();
     }
     

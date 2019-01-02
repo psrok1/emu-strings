@@ -145,7 +145,7 @@ class WineLauncher(object):
 
         log.info("Starting {} using {} engine".format(self.sample, self.engine))
         proc = subprocess.Popen(
-            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:"+str(int(self.soft_timeout)), self.sample],
+            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:10", self.sample],
             env={
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",

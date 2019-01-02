@@ -14,6 +14,7 @@ p32 = lambda d: struct.pack("<I", d & 0xFFFFFFFF)
 Instrumentation of WSH components using winedrop.dll and kind of magic
 """
 
+
 class WSHInstrumentation(object):
     def __init__(self, libpath):
         self.libpath = libpath
