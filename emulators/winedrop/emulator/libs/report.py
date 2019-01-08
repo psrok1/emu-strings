@@ -26,6 +26,7 @@ class Report(object):
         self.dns_reqs.add((qname, qtype))
 
     def report_string(self, string):
+        string = ''.join(map(lambda c: unichr(ord(c)), string)).encode("utf-8")
         if len(string) > 80:
             return self.report_snippet(string)
         self.strings.add(string)
