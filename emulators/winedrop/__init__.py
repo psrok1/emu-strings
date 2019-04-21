@@ -2,16 +2,15 @@ from collections import defaultdict
 import json
 import os
 
-from emulators import Emulator
-from emulators import engines
+from emulators import Emulator, engine
 
 
 class WinedropEmulator(Emulator):
     SUPPORTED_ENGINES = [
-        engines.JScript,
-        engines.JScriptEncode,
-        engines.VBScript,
-        engines.VBScriptEncode
+        engine.JScript,
+        engine.JScriptEncode,
+        engine.VBScript,
+        engine.VBScriptEncode
     ]
     IMAGE_NAME = "winedrop"
 

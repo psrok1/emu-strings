@@ -2,14 +2,13 @@ import hashlib
 import json
 import os
 
-from emulators import Emulator
-from emulators import engines
+from emulators import Emulator, engine
 
 
 class BoxJSEmulator(Emulator):
     SUPPORTED_ENGINES = [
-        engines.JScript,
-        engines.JScriptEncode,
+        engine.JScript,
+        engine.JScriptEncode,
     ]
     IMAGE_NAME = "boxjs"
 

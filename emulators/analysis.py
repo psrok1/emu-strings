@@ -5,9 +5,9 @@ import hashlib
 
 from pymongo import MongoClient
 
-import emulators
+from .engine import Engine
+from .emulator import get_emulators
 
-from emulators import engines
 from config import StorageConfig, MongoConfig
 
 
@@ -15,11 +15,11 @@ class Analysis(object):
     """
     Analysis instance
     """
-    STATUS_PENDING = 0
-    STATUS_IN_PROGRESS = 1
-    STATUS_SUCCESS = 2
-    STATUS_FAILED = 3
-    STATUS_ORPHANED = 255
+    STATUS_PENDING = "pending"
+    STATUS_IN_PROGRESS = "in-progress"
+    STATUS_SUCCESS = "success"
+    STATUS_FAILED = "failed"
+    STATUS_ORPHANED = "orphaned"
 
     @staticmethod
     def db_collection():
@@ -49,10 +49,12 @@ class Analysis(object):
         self.sample_file = self.engine = None
         self.status = None
         if aid is None:
+            # Create new instance
             self.aid = str(uuid.uuid4())
             os.makedirs(self.workdir)
-            print self.db_collection().insert({"aid": self.aid, "status": self.STATUS_PENDING, "timestamp": datetime.now()})
+            self.db_collection().insert({"aid": self.aid, "status": self.STATUS_PENDING, "timestamp": datetime.now()})
         else:
+            # Bind to existing instance
             self.aid = aid
             if not os.path.isdir(self.workdir):
                 raise IOError("Analysis path {} doesn't exist".format(aid))
@@ -60,12 +62,12 @@ class Analysis(object):
                 params = self.db_collection().find_one({"aid": aid})
                 self.status = params["status"]
                 self.timestamp = params["timestamp"]
-                self.engine = engines.Engine.get(params["engine"])
+                self.engine = Engine.get(params["engine"])
                 self.sample_file = "{}.{}".format(params["sha256"], self.engine.EXTENSION)
                 with open(os.path.join(self.workdir, self.sample_file), "rb") as f:
                     self.code = f.read()
-            except IndexError:
-                raise Exception("Analysis {} doesn't contain valid sample file!".format(aid))
+            except IndexError as e:
+                raise IOError("Analysis {} doesn't contain valid sample file!".format(aid)) from e
 
     def results(self):
         spath = os.path.join(self.workdir, "strings.txt")
@@ -85,17 +87,13 @@ class Analysis(object):
         entry = Analysis.db_collection().find_one({
             "sha256": hashlib.sha256(code).hexdigest(),
             "engine": str(engine)})
-        if entry is None:
-            return None
-        return Analysis(aid=entry["aid"])
+        return entry and Analysis(aid=entry["aid"])
 
     @staticmethod
     def get_analysis(aid):
         entry = Analysis.db_collection().find_one({
             "aid": aid})
-        if entry is None:
-            return None
-        return Analysis(aid=aid)
+        return entry and Analysis(aid=aid)
 
     def add_sample(self, code, engine, filename=None):
         """
@@ -113,7 +111,7 @@ class Analysis(object):
             }
         }
         self.code = code
-        self.engine = engines.Engine.get(engine)
+        self.engine = Engine.get(engine)
         self.sample_file = "{}.{}".format(params["$set"]["sha256"], self.engine.EXTENSION)
         params["$set"]["filename"] = filename or self.sample_file
         self.db_collection().update({"aid": self.aid}, params)
@@ -145,12 +143,12 @@ class Analysis(object):
         with open(os.path.join(self.workdir, "strings.txt"), "w") as f:
             f.write('\n'.join(list(strings)))
         
-        for h, snip in snippets.iteritems():
+        for h, snip in snippets.items():
             if "path" in snip:
                 snippet_path = os.path.abspath(snip["path"])
                 symlink_path = os.path.abspath(snippets_dir)
                 relpath = os.path.relpath(snippet_path, symlink_path)
-                print relpath
+                print(relpath)
                 os.symlink(relpath, os.path.join(snippets_dir, h))
             if "code" in snip:
                 with open(os.path.join(snippets_dir, h), "wb") as f:
@@ -159,12 +157,12 @@ class Analysis(object):
     def start(self, docker_client, opts=None):
         opts = opts or {}
         if self.empty:
-            raise Exception("Sample must be added")
+            raise ValueError("Sample must be added")
         self.set_status(Analysis.STATUS_IN_PROGRESS)
         try:
-            emus = [emu_cls(self.code, self.engine, **opts) for emu_cls in emulators.get_emulators(self.engine)]
+            emus = [emu_cls(self.code, self.engine, **opts) for emu_cls in get_emulators(self.engine)]
             for emu in emus:
-                print "Started in {}".format(emu.__class__.__name__)
+                print("Started in {}".format(emu.__class__.__name__))
                 emu.start(docker_client)
             for emu in emus:
                 emu.join()
