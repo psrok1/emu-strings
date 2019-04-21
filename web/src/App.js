@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import { BrowserRouter, Link } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 
-import './App.css';
-import "../node_modules/bootstrap/dist/css/bootstrap.min.css"
+import './App.css'
+import 'bootstrap/dist/css/bootstrap.min.css'
 import logo from "./logo.jpg";
 import UploadForm from './UploadForm';
 import AnalysisView from './AnalysisView';
