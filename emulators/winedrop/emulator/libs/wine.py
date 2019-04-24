@@ -31,6 +31,7 @@ class WineChannel(object):
         if self.recvlen == 0 and data.startswith(self.lmagic):
             # If some data were buffered - "\n" was added by monitor. Flush buffer
             if self.line_buffer:
+                # Remove "\n" from the end of buffer
                 self.line_buffer = self.line_buffer[:-1]
                 self.flush()
             # Parse message

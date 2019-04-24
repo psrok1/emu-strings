@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request
 
 import daemon
 
-from .emulators.analysis import Analysis
+from emustrings import Analysis, Sample, Language
 
 app = Flask("winedrop", static_folder=os.path.abspath('./web/build'))
 
@@ -26,7 +26,6 @@ def submit_analysis():
         if not file:
             raise Exception("File not specified")
 
-        engine = request.form["engine"]
         # Create BytesIO pseudo-file and store file from request
         strfd = BytesIO()
         file.save(strfd)
@@ -34,8 +33,10 @@ def submit_analysis():
         code = strfd.getvalue()
         # Create new analysis
         analysis = Analysis()
+        sample = Sample(code, file.filename)
+        language = Language.get(request.form.get("engine"))
         # Add sample code to analysis
-        analysis.add_sample(code, engine, filename=file.filename)
+        analysis.add_sample(sample, language)
         # Spawn task to daemon
         daemon.analyze_sample.apply_async((str(analysis.aid), {}))
         # Return analysis id

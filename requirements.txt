@@ -3,3 +3,4 @@ pymongo
 docker
 flask
 redis
+chardet

@@ -24,7 +24,9 @@ def setup_logger():
     log.propagate = True
     return log
 
+
 log = setup_logger()
+
 
 if __name__ == "__main__":
     from libs.wine import WineLauncher

@@ -1,8 +1,5 @@
-import hashlib
 import os
 import uuid
-
-from .engine import Engine
 
 from config import StorageConfig
 
@@ -11,12 +8,12 @@ class Emulator(object):
     """
     Docker-based generic emulator module
 
-    SUPPORTED_ENGINES - Supported WSH scripting engines (specified in emulators.engines)
+    SUPPORTED_LANGUAGES - Supported WSH scripting engines (specified in emu.language)
     IMAGE_NAME - Name of emulator image
 
     Instances of this class should be created only in Celery context (daemon.py)
     """
-    SUPPORTED_ENGINES = []
+    SUPPORTED_LANGUAGES = []
     IMAGE_NAME = ""
 
     @property
@@ -26,31 +23,30 @@ class Emulator(object):
         """
         return os.path.join(StorageConfig.EMULATION_PATH, str(self.emuid))
 
-    def __init__(self, code, engine, **opts):
+    def __init__(self, analysis, **opts):
         """
         Creates Emulator instance with additional runtime opts
 
         Supported opts: soft_timeout, hard_timeout
         """
-        self.engine = Engine.get(engine)
-        if not self.is_supported(self.engine):
-            raise ValueError("Engine {} is not supported by {} emulator".format(self.engine, self.__class__.__name__))
+        self.analysis = analysis
+        if not self.is_supported(self.analysis.language):
+            raise ValueError("Language {} is not supported by {} emulator".format(
+                self.analysis.language, self.__class__.__name__))
         self.container = None
 
         self.emuid = str(uuid.uuid4())
         os.makedirs(self.workdir)
 
-        sha256 = hashlib.sha256(code).hexdigest()
-        self.sample_file = "{}.{}".format(sha256, self.engine.EXTENSION)
+        self.sample_name = "{}.{}".format(self.analysis.sample.sha256, self.analysis.language.EXTENSION)
         # Add sample to emulation folder
-        with open(os.path.join(self.workdir, self.sample_file), "wb") as f:
-            f.write(code)
+        self.analysis.sample.store(os.path.join(self.workdir, self.sample_name))
 
         self.env = {
             "SOFT_TIMEOUT": opts.get("soft_timeout", 60.0),
             "HARD_TIMEOUT": opts.get("hard_timeout", 90.0),
-            "SAMPLE": self.sample_file,
-            "ENGINE": str(self.engine)
+            "SAMPLE": self.sample_name,
+            "LANGUAGE": str(self.analysis.language)
         }
 
     @classmethod
@@ -59,7 +55,7 @@ class Emulator(object):
         Checks whether scripting engine is supported by Emulator
         :param engine: Engine object, identifier or extension
         """
-        return engine in cls.SUPPORTED_ENGINES
+        return engine in cls.SUPPORTED_LANGUAGES
 
     def start(self, docker_client):
         """
@@ -100,6 +96,8 @@ class Emulator(object):
         """
         return []
 
-
-def get_emulators(engine_name):
-    return [emucls for emucls in Emulator.__subclasses__() if emucls.is_supported(engine_name)]
+    def logfiles(self):
+        """
+        Returns list of log relative paths
+        """
+        return []

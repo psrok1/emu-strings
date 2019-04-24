@@ -3,7 +3,7 @@ import docker
 
 from config import CeleryConfig
 
-from emulators.analysis import Analysis
+from emustrings import Analysis
 
 celery_app = celery.Celery()
 celery_app.config_from_object(CeleryConfig)
