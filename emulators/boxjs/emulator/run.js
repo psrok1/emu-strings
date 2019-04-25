@@ -8,5 +8,3 @@ child_process.execFileSync("node", ["/opt/emulator/box-js/run.js",
     cwd: "/opt/analysis",
     timeout: (+process.env.HARD_TIMEOUT)*1000
 })
-
-fs.symlinkSync("./"+process.env.SAMPLE+".results", "results")

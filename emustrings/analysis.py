@@ -1,5 +1,4 @@
 import os
-import hashlib
 import uuid
 
 from datetime import datetime
@@ -10,6 +9,7 @@ from config import StorageConfig, MongoConfig
 from emulators import get_emulators
 
 from .language import Language, JScript
+from .results import ResultsStore
 from .sample import Sample
 
 
@@ -51,16 +51,13 @@ class Analysis(object):
         self.sample = self.language = None
         self.status = None
 
-        self.snippets = {}
-        self.strings = set()
-        self.logfiles = {}
-
         """
         Create new instance
         """
         if aid is None:
             self.aid = str(uuid.uuid4())
             os.makedirs(self.workdir)
+            self.results = ResultsStore(self.workdir)
             self.db_collection().insert({
                 "aid": self.aid,
                 "status": self.STATUS_PENDING,
@@ -86,88 +83,8 @@ class Analysis(object):
         except IndexError as e:
             raise IOError("Analysis {} is corrupted!".format(aid)) from e
 
-        self.load_results()
-
-    def load_results(self):
-        snippets_dir = os.path.join(self.workdir, "snippets")
-        if os.path.isdir(snippets_dir):
-            self.snippets = {
-                snip: os.path.join(snippets_dir, snip)
-                for snip in os.listdir(snippets_dir)
-            }
-
-        logfiles_dir = os.path.join(self.workdir, "logfiles")
-        if os.path.isdir(logfiles_dir):
-            self.logfiles = {
-                log: os.path.join(logfiles_dir, log)
-                for log in os.listdir(logfiles_dir)
-            }
-
-        strings_path = os.path.join(self.workdir, "strings.txt")
-        if os.path.isfile(strings_path):
-            with open(strings_path, "r") as f:
-                self.strings = set(list(map(str.strip, f.readlines())))
-
-    def add_snippet(self, snippet):
-        snippets_dir = os.path.join(self.workdir, "snippets")
-        os.makedirs(snippets_dir, exist_ok=True)
-
-        if isinstance(snippet, (list, tuple)):
-            snip_id, emulation_path = snippet
-        else:
-            snip_id = hashlib.sha256(snippet).hexdigest()
-            emulation_path = None
-
-        if snip_id in self.snippets:
-            return
-
-        snippet_path = os.path.join(snippets_dir, snip_id)
-
-        if emulation_path is None:
-            with open(snippet_path, "wb") as f:
-                f.write(snippet)
-        else:
-            emulation_path = os.path.abspath(emulation_path)
-            symlink_path = os.path.abspath(snippets_dir)
-            relpath = os.path.relpath(emulation_path, symlink_path)
-            os.symlink(relpath, snippet_path)
-
-        self.snippets[snip_id] = snippet_path
-
-    def add_string(self, string):
-        printable = '0123456789abcdefghijklmnopqrstuvwxyz' \
-                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()' \
-                    '*+,-./:;<=>?@[\\]^_`{|}~ \t'
-        if 3 < len(string) < 128 and all(map(lambda c: c in printable, string)):
-            self.strings.add(string)
-        if len(string) >= 128:
-            self.add_snippet(string)
-
-    def store_strings(self):
-        with open(os.path.join(self.workdir, "strings.txt"), "w") as f:
-            f.write('\n'.join(list(self.strings)))
-
-    def add_logfile(self, logname, logpath):
-        logfiles_dir = os.path.join(self.workdir, "logfiles")
-        os.makedirs(logfiles_dir, exist_ok=True)
-        if logname in self.logfiles:
-            return
-        logfile_path = os.path.join(logfiles_dir, logname)
-        emulation_path = os.path.abspath(logpath)
-        symlink_path = os.path.abspath(logfiles_dir)
-        relpath = os.path.relpath(emulation_path, symlink_path)
-        os.symlink(relpath, logfile_path)
-        self.logfiles[logname] = logfile_path
-
-    def store_results(self, emulators):
-        for emulator in emulators:
-            for string in emulator.strings():
-                self.add_string(string)
-            for snippet in emulator.snippets():
-                self.add_snippet(snippet)
-            for logfile in emulator.logfiles():
-                self.add_logfile(*logfile)
-        self.store_strings()
+        self.results = ResultsStore(self.workdir)
+        self.results.load(params)
 
     @staticmethod
     def find_analysis(sample):
@@ -203,12 +120,15 @@ class Analysis(object):
         self.db_collection().update({"aid": self.aid}, params)
         self.sample.store(os.path.join(self.workdir, sample.sha256) + "." + self.language.extension)
 
-    def set_status(self, status):
+    def set_status(self, status, exc=None):
         """
         Sets analysis status
         """
+        params = {"status": status}
+        if exc:
+            params = {"exc": exc}
         self.db_collection().update({"aid": self.aid},
-                                    {"$set": {"status": status}})
+                                    {"$set": params})
         self.status = status
 
     def start(self, docker_client, opts=None):
@@ -221,15 +141,17 @@ class Analysis(object):
         try:
             emus = get_emulators(self, **opts)
             for emu in emus:
-                print("Started in {}".format(emu.__class__.__name__))
+                print("Started in {}".format(emu.name))
                 emu.start(docker_client)
 
             for emu in emus:
                 emu.join()
+                self.results.process(emu)
 
-            self.store_results(emus)
+            self.db_collection().update({"aid": self.aid},
+                                        {"$set": self.results.store()})
             self.set_status(Analysis.STATUS_SUCCESS)
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self.set_status(Analysis.STATUS_FAILED)
+            self.set_status(Analysis.STATUS_FAILED, traceback.format_exc())

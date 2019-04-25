@@ -14,7 +14,7 @@ class BoxJSEmulator(Emulator):
     IMAGE_NAME = "boxjs"
 
     def _local_path(self, fname):
-        return os.path.join(self.workdir, "results", fname)
+        return os.path.join(self.workdir, self.sample_name+".results", fname)
 
     def _get_urls(self):
         urls_path = self._local_path("urls.json")
@@ -60,3 +60,10 @@ class BoxJSEmulator(Emulator):
 
     def snippets(self):
         return list(self._snippets())
+
+    def logfiles(self):
+        return list(filter(lambda f: os.path.isfile(f[1]), [
+            ("analysis", self._local_path("analysis.log")),
+            ("resources", self._local_path("resources.json")),
+            ("IOC", self._local_path("IOC.json"))
+        ]))

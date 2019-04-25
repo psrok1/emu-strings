@@ -35,3 +35,10 @@ class WinedropEmulator(Emulator):
         """
         report = self._load_report()
         return map(lambda h: (h, os.path.join(self.workdir, "snippets", h)), report["snippets"])
+
+    def logfiles(self):
+        return [
+            ("stdout", "stdout.log"),
+            ("wine", "wine.log"),
+            ("winedrop", "winedrop.log")
+        ]

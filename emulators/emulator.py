@@ -23,6 +23,10 @@ class Emulator(object):
         """
         return os.path.join(StorageConfig.EMULATION_PATH, str(self.emuid))
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
     def __init__(self, analysis, **opts):
         """
         Creates Emulator instance with additional runtime opts
@@ -98,6 +102,6 @@ class Emulator(object):
 
     def logfiles(self):
         """
-        Returns list of log relative paths
+        Returns list of tuples (key, path) with log relative paths
         """
         return []
