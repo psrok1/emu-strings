@@ -8,7 +8,13 @@ import daemon
 
 from emustrings import Analysis, Sample, Language
 
-app = Flask("winedrop", static_folder=os.path.abspath('./web/build'))
+app = Flask("emu-strings", static_folder=os.path.abspath('./web/build'))
+
+
+@app.route("/api/analysis")
+def analysis_list():
+    last_id = request.args.get('last_id')
+    return jsonify(Analysis.list_analyses(last_id))
 
 
 @app.route("/api/analysis/<aid>")
@@ -16,7 +22,13 @@ def get_analysis(aid):
     entry = Analysis.get_analysis(aid)
     if entry is None:
         return "{}"
-    return jsonify(entry.results())
+    return jsonify(entry.to_dict())
+
+
+@app.route("/api/analysis/<aid>/<key>/<identifier>")
+def get_artifact(aid, key, identifier):
+    entry = Analysis.get_analysis(aid)
+    return entry.results.load_element(key, identifier)
 
 
 @app.route("/api/submit", methods=["POST"])

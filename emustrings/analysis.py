@@ -99,6 +99,14 @@ class Analysis(object):
             "aid": aid})
         return entry and Analysis(aid=aid)
 
+    @staticmethod
+    def list_analyses(last_id=None, limit=10):
+        entries = Analysis.db_collection().find(
+            {"_id": {"$gt": last_id}},
+            {"filename": 1, "sha256": 1, "aid": 1, "_id": 1, "timestamp": 1, "status": 1}
+        ).limit(limit)
+        return
+
     def add_sample(self, sample: Sample, language=None):
         """
         Adds sample to analysis workdir
@@ -155,3 +163,12 @@ class Analysis(object):
             import traceback
             traceback.print_exc()
             self.set_status(Analysis.STATUS_FAILED, traceback.format_exc())
+
+    def to_dict(self):
+        return {
+            "sample": self.sample.to_dict(),
+            "status": self.status,
+            "timestamp": self.timestamp,
+            "language": self.language,
+            "results": self.results.store()
+        }

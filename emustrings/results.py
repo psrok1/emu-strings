@@ -47,7 +47,7 @@ class ResultsStore(object):
             f.write(content)
         return element_path
 
-    def _load_element(self, key, identifier, default=b""):
+    def load_element(self, key, identifier, default=b""):
         key_path = self._get_keypath(key)
         if key_path is None:
             return default

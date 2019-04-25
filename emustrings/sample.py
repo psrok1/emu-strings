@@ -42,3 +42,10 @@ class Sample(object):
     def store(self, path):
         with open(path, "wb") as f:
             f.write(self.code)
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "md5": self.md5,
+            "sha256": self.sha256
+        }
