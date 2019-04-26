@@ -3,6 +3,7 @@ import uuid
 
 from datetime import datetime
 
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 
 from config import StorageConfig, MongoConfig
@@ -79,7 +80,8 @@ class Analysis(object):
             self.status = params["status"]
             self.timestamp = params["timestamp"]
             self.language = Language.get(params["language"])
-            self.sample = Sample.load("{}.{}".format(params["sha256"], self.language.extension))
+            sample_path = os.path.join(self.workdir, "{}.{}".format(params["sha256"], self.language.extension))
+            self.sample = Sample.load(sample_path)
         except IndexError as e:
             raise IOError("Analysis {} is corrupted!".format(aid)) from e
 
@@ -100,12 +102,16 @@ class Analysis(object):
         return entry and Analysis(aid=aid)
 
     @staticmethod
-    def list_analyses(last_id=None, limit=10):
-        entries = Analysis.db_collection().find(
-            {"_id": {"$gt": last_id}},
-            {"filename": 1, "sha256": 1, "aid": 1, "_id": 1, "timestamp": 1, "status": 1}
-        ).limit(limit)
-        return
+    def list_analyses(last_id=None, limit=7):
+        last_id_query = {"_id": {"$lt": ObjectId(last_id)}} if last_id else {}
+        entries = list(Analysis.db_collection().find(
+            last_id_query,
+            {"filename": 1, "sha256": 1, "aid": 1, "_id": 1, "timestamp": 1,
+             "status": 1, "language": 1}
+        ).sort("_id", -1).limit(limit))
+        for entry in entries:
+            entry["_id"] = str(entry["_id"])
+        return entries
 
     def add_sample(self, sample: Sample, language=None):
         """
@@ -134,7 +140,7 @@ class Analysis(object):
         """
         params = {"status": status}
         if exc:
-            params = {"exc": exc}
+            params["exc"] = exc
         self.db_collection().update({"aid": self.aid},
                                     {"$set": params})
         self.status = status
@@ -148,6 +154,7 @@ class Analysis(object):
 
         try:
             emus = get_emulators(self, **opts)
+            print("Found {} emulators".format(len(emus)))
             for emu in emus:
                 print("Started in {}".format(emu.name))
                 emu.start(docker_client)
@@ -169,6 +176,6 @@ class Analysis(object):
             "sample": self.sample.to_dict(),
             "status": self.status,
             "timestamp": self.timestamp,
-            "language": self.language,
+            "language": str(self.language),
             "results": self.results.store()
         }

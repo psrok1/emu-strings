@@ -7,7 +7,7 @@ from emustrings import language
 
 
 class WinedropEmulator(Emulator):
-    SUPPORTED_ENGINES = [
+    SUPPORTED_LANGUAGES = [
         language.JScript,
         language.JScriptEncode,
         language.VBScript,

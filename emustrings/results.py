@@ -3,12 +3,13 @@ import os
 import re
 
 from urllib.parse import urlparse
+from .sample import Sample
 
 really_printable = '0123456789abcdefghijklmnopqrstuvwxyz' \
                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()' \
                    '*+,-./:;<=>?@[\\]^_`{|}~ \t'
 
-url_regex = r"https?://[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]{2,})+(?:[/?][a-zA-Z-0-9?/:&+\-=.]+)?"
+url_regex = r"(https?://[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]{2,})+(?:[/?][a-zA-Z-0-9?/:&+\-=.]+)?)"
 
 
 class ResultsStore(object):
@@ -66,15 +67,18 @@ class ResultsStore(object):
             yield identifier
 
     def _look_for_url(self, data, found_in):
-        for url in re.findall(url_regex, data):
+        for matches in re.findall(url_regex, data):
+            url = matches[0]
             parsed_url = urlparse(url)
             netloc = parsed_url.netloc
-            if netloc and netloc not in self.urls:
-                self.urls[netloc] = []
-            self.urls[netloc].append({
-                "url": url,
-                "found_in": found_in
-            })
+            print(url)
+            if netloc:
+                if netloc not in self.urls:
+                    self.urls[netloc] = []
+                self.urls[netloc].append({
+                    "url": url,
+                    "found_in": found_in
+                })
 
     def add_string(self, string):
         if 3 < len(string) < 128 and all(map(lambda c: c in really_printable, string)):
@@ -97,13 +101,14 @@ class ResultsStore(object):
             snippet_path = self._store_as_file("snippets", snip_id, snippet)
         else:
             snippet_path = self._store_as_symlink("snippets", snip_id, emulation_path)
-            snippet = self._load_element("snippets", snip_id)
+            snippet = self.load_element("snippets", snip_id)
         self.snippets[snip_id] = {
             "path": snippet_path,
             "size": len(snippet),
             "sha256": snip_id
         }
-        self._look_for_url(snippet, {
+        snip_sample = Sample(snippet)
+        self._look_for_url(snip_sample.str_code, {
             "type": "snippet",
             "sha256": snip_id
         })
@@ -127,10 +132,10 @@ class ResultsStore(object):
             self.add_logfile(emulator, *logfile)
 
     def load(self, params):
-        self.strings = set(params["strings"])
-        self.snippets = params["snippets"]
-        self.urls = params["urls"]
-        self.logfiles = params["logfiles"]
+        self.strings = set(params.get("strings", []))
+        self.snippets = params.get("snippets", {})
+        self.urls = params.get("urls", {})
+        self.logfiles = params.get("logfiles", {})
 
     def store(self):
         return {

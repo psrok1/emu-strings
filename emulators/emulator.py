@@ -42,7 +42,7 @@ class Emulator(object):
         self.emuid = str(uuid.uuid4())
         os.makedirs(self.workdir)
 
-        self.sample_name = "{}.{}".format(self.analysis.sample.sha256, self.analysis.language.EXTENSION)
+        self.sample_name = "{}.{}".format(self.analysis.sample.sha256, self.analysis.language.extension)
         # Add sample to emulation folder
         self.analysis.sample.store(os.path.join(self.workdir, self.sample_name))
 
@@ -54,12 +54,13 @@ class Emulator(object):
         }
 
     @classmethod
-    def is_supported(cls, engine):
+    def is_supported(cls, language):
         """
         Checks whether scripting engine is supported by Emulator
-        :param engine: Engine object, identifier or extension
         """
-        return engine in cls.SUPPORTED_LANGUAGES
+        print("{} - {} {}: {}".format(cls.__name__, language, list(map(str,cls.SUPPORTED_LANGUAGES)),
+                                      language in cls.SUPPORTED_LANGUAGES))
+        return language in cls.SUPPORTED_LANGUAGES
 
     def start(self, docker_client):
         """

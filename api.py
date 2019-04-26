@@ -13,7 +13,7 @@ app = Flask("emu-strings", static_folder=os.path.abspath('./web/build'))
 
 @app.route("/api/analysis")
 def analysis_list():
-    last_id = request.args.get('last_id')
+    last_id = request.args.get('lastId')
     return jsonify(Analysis.list_analyses(last_id))
 
 
@@ -46,7 +46,7 @@ def submit_analysis():
         # Create new analysis
         analysis = Analysis()
         sample = Sample(code, file.filename)
-        language = Language.get(request.form.get("engine"))
+        language = Language.get(request.form.get("language"))
         # Add sample code to analysis
         analysis.add_sample(sample, language)
         # Spawn task to daemon

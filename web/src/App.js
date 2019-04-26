@@ -1,27 +1,34 @@
 import React, { Component } from 'react';
-import { BrowserRouter, Link } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import logo from "./logo.jpg";
+
+import Nav from "./Nav"
 import UploadForm from './UploadForm';
 import AnalysisView from './AnalysisView';
+import AnalysisList from './AnalysisList';
 
 class App extends Component {
   render() {
     return (
-      <BrowserRouter>
-        <div class="text-center">
-          <Link to="/">
-            <img src={logo} alt="logo" width="700px" class="logo"/>
-          </Link>
-          <Switch>
-            <Route exact path='/' component={UploadForm}/>
-            <Route exact path='/analysis/:aid' component={AnalysisView}/>
-          </Switch>
-        </div>
-      </BrowserRouter>
+      <div>
+        <BrowserRouter>
+          <div>
+            <Nav />
+            <main role="main" className="container">
+              <div>
+                <Switch>
+                  <Route exact path='/' component={AnalysisList}/>
+                  <Route exact path='/submit' component={UploadForm}/>
+                  <Route exact path='/analysis/:aid' component={AnalysisView}/>
+                </Switch>
+              </div>
+            </main>
+          </div>
+        </BrowserRouter>
+      </div>
     );
   }
 }

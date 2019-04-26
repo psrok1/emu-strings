@@ -1,78 +1,32 @@
-html,
-body {
-  height: 100%;
-}
-
-body {
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-align: center;
-  align-items: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
-  background-color: #f6f6ee !important;
-}
-
 #root {
-  width: 100%;
+    width: 100%;
 }
 
-.form-submit {
-  width: 100%;
-  max-width: 400px;
-  padding: 15px;
-  margin: auto;
-}
-.form-submit .checkbox {
-  font-weight: 400;
-}
-.form-submit .form-control {
-  position: relative;
-  box-sizing: border-box;
-  height: auto;
-  padding: 10px;
-  font-size: 16px;
-}
-.form-submit .form-control:focus {
-  z-index: 2;
-}
-.form-submit input[type="email"] {
-  margin-bottom: -1px;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
-}
-.form-submit input[type="password"] {
-  margin-bottom: 10px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.mid-width {
+    width: 100%;
+    max-width: 700px;
+    padding: 15px;
+    margin: auto;
 }
 
 .dropzone {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  border-width: 2px;
-  border-color: rgb(102, 102, 102);
-  border-style: dashed;
-  border-radius: 5px;
-  margin-bottom: 4pt;
+    margin: auto;
+    width: 100%;
+    max-width: 400px;
+    height: 100px;
+    border-width: 2px;
+    border-color: rgb(102, 102, 102);
+    border-style: dashed;
+    border-radius: 5px;
 }
 
-img.logo {
-  margin-bottom: 8pt;
+.table tbody td.cell-ellipsis {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
 }
 
-.results, .hourglass {
-  width: 100%;
-  max-width: 700px;
-  height: 400px;
-  margin: auto;
-}
-
-pre.strings {
-  text-align: left;
-  padding: 8pt;
-  background-color: #334;
-  color: white;
-  height: 400px;
+pre.exception {
+    margin: 1rem;
 }

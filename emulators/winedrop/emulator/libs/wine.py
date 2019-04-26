@@ -71,7 +71,7 @@ class WineLauncher(object):
         self.soft_timeout = float(os.getenv("SOFT_TIMEOUT", 30.0))
         self.hard_timeout = float(os.getenv("HARD_TIMEOUT", 60.0))
         self.sample = os.getenv("SAMPLE")
-        self.engine = os.getenv("ENGINE")
+        self.engine = os.getenv("LANGUAGE")
 
     def get_user(self):
         userpath = "/opt/.username"

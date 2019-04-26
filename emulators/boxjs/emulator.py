@@ -7,7 +7,7 @@ from emustrings.language import JScript, JScriptEncode
 
 
 class BoxJSEmulator(Emulator):
-    SUPPORTED_ENGINES = [
+    SUPPORTED_LANGUAGES = [
         JScript,
         JScriptEncode,
     ]
