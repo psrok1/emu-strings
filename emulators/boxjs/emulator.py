@@ -39,6 +39,9 @@ class BoxJSEmulator(Emulator):
             if ioc["type"] == "Run":
                 yield ioc["value"]["command"]
 
+    def connections(self):
+        return list(set(self._get_urls()))
+
     def strings(self):
         """
         Returns list of strings found during emulation

@@ -89,6 +89,12 @@ class Emulator(object):
             if self.container is not None:
                 self.container.remove()
 
+    def connections(self):
+        """
+        Returns list of URLs that script connected with during analysis
+        """
+        return []
+
     def strings(self):
         """
         Returns list of strings found during emulation

@@ -13,10 +13,14 @@ url_regex = r"(https?://[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]{2,})+(?:[/?][a-zA-Z-0-9?/:&
 
 
 class ResultsStore(object):
+    """
+    Storage for incoming analysis results from emulators
+    """
     def __init__(self, workdir):
         self.workdir = workdir
         self.snippets = {}
         self.urls = {}
+        self.url_origins = {}
         self.strings = set()
         self.logfiles = {}
 
@@ -66,26 +70,30 @@ class ResultsStore(object):
         for identifier in os.listdir(key_path):
             yield identifier
 
+    def add_url(self, url, origin):
+        parsed_url = urlparse(url)
+        netloc = parsed_url.netloc
+        if not netloc:
+            return
+        # Is unique?
+        if url in self.url_origins:
+            self.url_origins[url].add(origin)
+            return
+        self.url_origins[url] = {origin}
+        if netloc not in self.urls:
+            self.urls[netloc] = []
+        self.urls[netloc].append(url)
+
     def _look_for_url(self, data, found_in):
         for matches in re.findall(url_regex, data):
-            url = matches[0]
-            parsed_url = urlparse(url)
-            netloc = parsed_url.netloc
-            print(url)
-            if netloc:
-                if netloc not in self.urls:
-                    self.urls[netloc] = []
-                self.urls[netloc].append({
-                    "url": url,
-                    "found_in": found_in
-                })
+            self.add_url(matches[0], found_in)
 
     def add_string(self, string):
         if 3 < len(string) < 128 and all(map(lambda c: c in really_printable, string)):
             self.strings.add(string)
         if len(string) >= 128:
             self.add_snippet(string)
-        self._look_for_url(string, "strings")
+        self._look_for_url(string, "string")
 
     def add_snippet(self, snippet):
         if isinstance(snippet, (list, tuple)):
@@ -108,10 +116,7 @@ class ResultsStore(object):
             "sha256": snip_id
         }
         snip_sample = Sample(snippet)
-        self._look_for_url(snip_sample.str_code, {
-            "type": "snippet",
-            "sha256": snip_id
-        })
+        self._look_for_url(snip_sample.str_code, ("snippet", snip_id))
 
     def add_logfile(self, emulator, key, path):
         if emulator.name not in self.logfiles:
@@ -124,6 +129,8 @@ class ResultsStore(object):
         self.logfiles[emulator.name][key] = logfile_path
 
     def process(self, emulator):
+        for connection in emulator.connections():
+            self.add_url(connection, "connection")
         for string in emulator.strings():
             self.add_string(string)
         for snippet in emulator.snippets():
@@ -135,6 +142,7 @@ class ResultsStore(object):
         self.strings = set(params.get("strings", []))
         self.snippets = params.get("snippets", {})
         self.urls = params.get("urls", {})
+        self.url_origins = params.get("url_origins", {})
         self.logfiles = params.get("logfiles", {})
 
     def store(self):
@@ -142,5 +150,6 @@ class ResultsStore(object):
             "strings": list(self.strings),
             "snippets": self.snippets,
             "urls": self.urls,
+            "url_origins": {k: list(v) for k, v in self.url_origins.items()},
             "logfiles": self.logfiles
         }

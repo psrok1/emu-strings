@@ -22,6 +22,10 @@ class WinedropEmulator(Emulator):
         with open(report_path) as f:
             return json.load(f)
 
+    def connections(self):
+        report = self._load_report()
+        return list(set(report["urls"]))
+
     def strings(self):
         """
         Returns list of strings found during emulation
