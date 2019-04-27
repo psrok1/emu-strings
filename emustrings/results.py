@@ -99,6 +99,8 @@ class ResultsStore(object):
         if isinstance(snippet, (list, tuple)):
             snip_id, emulation_path = snippet
         else:
+            if isinstance(snippet, str):
+                snippet = snippet.encode("utf8")
             snip_id = hashlib.sha256(snippet).hexdigest()
             emulation_path = None
 

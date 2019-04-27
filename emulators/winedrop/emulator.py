@@ -42,7 +42,7 @@ class WinedropEmulator(Emulator):
 
     def logfiles(self):
         return [
-            ("stdout", "stdout.log"),
-            ("wine", "wine.log"),
-            ("winedrop", "winedrop.log")
+            ("stdout", os.path.join(self.workdir, "stdout.log")),
+            ("wine", os.path.join(self.workdir, "wine.log")),
+            ("winedrop", os.path.join(self.workdir, "winedrop.log"))
         ]

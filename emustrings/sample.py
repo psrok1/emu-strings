@@ -17,7 +17,7 @@ class Sample(object):
 
     @property
     def extension(self):
-        return next(self.name.rsplit("."), "")
+        return next(iter(self.name.rsplit(".")), "")
 
     def has(self, pattern):
         if isinstance(pattern, bytes):

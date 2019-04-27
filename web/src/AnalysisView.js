@@ -3,6 +3,7 @@ import axios from 'axios';
 
 import { Hourglass, brokenglass } from "./Hourglass";
 import AnalysisStatus, * as status from "./AnalysisStatus";
+import AnalysisResults from './AnalysisResults';
 
 class AnalysisView extends Component {
     state = {}
@@ -78,6 +79,12 @@ class AnalysisView extends Component {
             {
                 this.state.analysis.error ?
                     <pre className="exception alert-danger">{this.state.analysis.error}</pre>
+                    : []
+            }
+            {
+                this.state.analysis.status === status.STATUS_SUCCESS ?
+                    <AnalysisResults {...this.state.analysis.results} 
+                                     analysis={this.props.match.params.aid}/>
                     : []
             }
         </div>)
