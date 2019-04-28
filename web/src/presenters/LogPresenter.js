@@ -49,18 +49,22 @@ export default class LogPresenter extends Component {
 
     componentDidUpdate(prevProps) {
         if(prevProps !== this.props)
-            this.setState({selected: undefined})
+            this.setState({
+                emulator: undefined,
+                selected: undefined
+            })
     }
 
     selectLog(logfile) {
         this.setState({selected: logfile})
     }
 
+    switchEmulator(emulator) {
+        this.setState({emulator, selected: undefined})
+    }
+
     render() {
         let logfiles = this.props.logfiles;
-        let logs = [].concat(...Object.keys(logfiles)
-                                      .map(emulator => Object.keys(logfiles[emulator])
-                                                             .map(identifier => ({emulator, identifier}))))
         return (
             <div>
                 <h3 id="logs">
@@ -74,34 +78,51 @@ export default class LogPresenter extends Component {
                         No logs created during analysis!
                     </div> )
                     : (
-                        <div class="row">
-                            <div class="col-3 nav nav-pills snippets">
-                                {
-                                    logs.map(log => {
-                                        let logid = `${log.emulator}-${log.identifier}`;
-                                        return <a className={`nav-link ${this.state.selected === logid ? "active" : ""}`}
-                                                  href="#logfile"
-                                                  onClick={ev => { ev.preventDefault(); this.selectLog(logid) }}>
-                                                    {log.identifier}
-                                                    <br/>
-                                                    Emulator {log.emulator}
+                    <div>
+                        <ul className="nav nav-tabs">
+                            {
+                                Object.keys(logfiles).map(emulator => (
+                                    <li className="nav-item">
+                                        <a className={`nav-link ${this.state.emulator === emulator ? "active" : ""}`}
+                                            href="#emulator"
+                                            onClick={ev => {ev.preventDefault(); this.switchEmulator(emulator)}}>
+                                            {emulator}
                                         </a>
-                                    })
-                                }
+                                    </li>
+                                ))
+                            }
+                        </ul>
+                        {
+                            this.state.emulator ?
+                            <div class="row">
+                                <div class="col-3 nav nav-pills snippets">
+                                    {
+                                        Object.keys(logfiles[this.state.emulator]).map(log => {
+                                            let logid = `${this.state.emulator}-${log}`;
+                                            return <a className={`nav-link ${this.state.selected === logid ? "active" : ""}`}
+                                                    href="#logfile"
+                                                    onClick={ev => { ev.preventDefault(); this.selectLog(logid) }}>
+                                                        {log}
+                                            </a>
+                                        })
+                                    }
+                                </div>
+                                <div class="col">
+                                    {
+                                        this.state.selected 
+                                        ? <LogViewer 
+                                            analysis={this.props.analysis}
+                                            log={this.state.selected} />
+                                        : <div className="snippet-view text-center">
+                                            <FontAwesomeIcon icon="hand-point-left"/>
+                                            <div>Select one of the analysis logs presented on the left</div>
+                                        </div>
+                                    }
+                                </div>
                             </div>
-                            <div class="col">
-                                {
-                                    this.state.selected 
-                                    ? <LogViewer 
-                                        analysis={this.props.analysis}
-                                        log={this.state.selected} />
-                                    : <div className="snippet-view text-center">
-                                        <FontAwesomeIcon icon="hand-point-left"/>
-                                        <div>Select one of the analysis logs presented on the left</div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
+                            : []
+                        }
+                    </div>
                     )
                 }
                 </div>

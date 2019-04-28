@@ -87,12 +87,13 @@ class AnalysisView extends Component {
                                      analysis={this.props.match.params.aid}/>
                     : []
             }
+            {
+                this.state.analysis.status === status.STATUS_PENDING ||
+                this.state.analysis.status === status.STATUS_IN_PROGRESS
+                ? <Hourglass />
+                : []
+            }
         </div>)
-        /*
-        if(this.state.error)
-            return <Hourglass hourglass={brokenglass} message={this.state.error} />
-        return <Hourglass message={this.state.status || "Checking analysis status..."} />
-        */
     }
 }
 

@@ -117,6 +117,9 @@ class WineLauncher(object):
                 source, data = element
 
                 if source == proc.stdout:
+                    # Translate "\r\n" to "\n" (seems to be translated by Wine environment)
+                    if data.endswith("\r\n"):
+                        data = data[:-2]+"\n"
                     msg = channel.consume(data)
                     if msg is None:
                         continue
@@ -146,7 +149,7 @@ class WineLauncher(object):
 
         log.info("Starting {} using {} engine".format(self.sample, self.engine))
         proc = subprocess.Popen(
-            [self.WINE_EXEC, "cscript", "//E:"+self.engine, "//T:10", self.sample],
+            [self.WINE_EXEC, "cscript", "//E:"+self.engine, self.sample],
             env={
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",

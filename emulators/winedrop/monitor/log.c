@@ -22,8 +22,8 @@ void log_init() {
 
 void log_send_raw(const char* data, unsigned int length)
 {
-    char buffer[2048], preflen = 0;
-    preflen = snprintf(buffer, 2048, "\n*$wdrop%08X:%u:", L_MAGIC, length);
+    char buffer[MAX_CHUNK_LEN*2], preflen = 0;
+    preflen = snprintf(buffer, MAX_CHUNK_LEN*2, "\n*$wdrop%08X:%u:", L_MAGIC, length);
     memcpy(buffer + preflen, data, length);
     write(1, buffer, preflen + length);
 }
@@ -43,14 +43,15 @@ void log_send(char type, const char* fmt, ...)
 
     while(buf_size > MAX_CHUNK_LEN)
     {
-        *pbuf = 'p';
-        log_send_raw(pbuf, MAX_CHUNK_LEN + 1);
+        *buffer = 'p';
+        log_send_raw(buffer, MAX_CHUNK_LEN + 1);
         buf_size -= MAX_CHUNK_LEN;
         pbuf += MAX_CHUNK_LEN;
+        memcpy(buffer + 1, pbuf, min(buf_size, MAX_CHUNK_LEN));
     }
-    *pbuf = type;
+    *buffer = type;
 
-    log_send_raw(pbuf, buf_size + 1);
+    log_send_raw(buffer, buf_size + 1);
     free(buffer);
     va_end(args);
 }
