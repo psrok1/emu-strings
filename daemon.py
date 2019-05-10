@@ -1,17 +1,14 @@
-import celery
 import docker
 
-from config import CeleryConfig
-
 from emustrings import Analysis
-
-celery_app = celery.Celery()
-celery_app.config_from_object(CeleryConfig)
+from emustrings.celery import celery_app
+from emustrings.emulators import load_images
 
 docker_client = docker.from_env()
+load_images(docker_client)
 
 
-@celery_app.task(ignore_result=True)
+@celery_app.task(name="analyze_sample", ignore_result=True)
 def analyze_sample(aid, opts):
     analysis = Analysis(aid)
     analysis.start(docker_client, opts)

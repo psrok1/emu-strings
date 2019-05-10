@@ -7,8 +7,8 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 
 from config import StorageConfig, MongoConfig
-from emulators import get_emulators
 
+from .emulators import get_emulators
 from .language import Language, JScript
 from .results import ResultsStore
 from .sample import Sample
