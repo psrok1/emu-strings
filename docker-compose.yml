@@ -2,11 +2,13 @@ version: "3.7"
 services:
   emu-app:
     build:
-      context: .
+      context: ./src
       dockerfile: Dockerfile-app
     links:
       - mongo
       - redis
+    environment:
+      STATIC_PATH: /app/build/static
     ports:
       - "64205:80"
     volumes:
@@ -15,7 +17,7 @@ services:
         target: /app/results
   emu-daemon:
     build:
-      context: .
+      context: ./src
       dockerfile: Dockerfile-daemon
     links:
       - dind
@@ -45,5 +47,3 @@ services:
       - type: bind
         source: ./data/results
         target: /app/results
-      - type: tmpfs
-        target: /var/lib/docker
