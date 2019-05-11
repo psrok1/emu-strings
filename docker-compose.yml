@@ -12,8 +12,8 @@ services:
     ports:
       - "64205:80"
     volumes:
-      - type: bind
-        source: ./data/results
+      - type: volume
+        source: results
         target: /app/results
   emu-daemon:
     build:
@@ -29,14 +29,14 @@ services:
       - type: bind
         source: ./emulators/images
         target: /app/images
-      - type: bind
-        source: ./data/results
+      - type: volume
+        source: results
         target: /app/results
   mongo:
     image: mongo
     volumes:
-      - type: bind
-        source: ./data/db
+      - type: volume
+        source: mongodb
         target: /data/db
   redis:
     image: redis:alpine
@@ -44,6 +44,10 @@ services:
     image: docker:dind
     privileged: true
     volumes:
-      - type: bind
-        source: ./data/results
+      - type: volume
+        source: results
         target: /app/results
+
+volumes:
+  mongodb:
+  results:

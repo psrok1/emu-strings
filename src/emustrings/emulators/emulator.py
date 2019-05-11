@@ -72,6 +72,9 @@ class Emulator(object):
             dns=['127.0.0.1'],
             network_mode="none",
             environment=self.env,
+            sysctls={
+                "net.ipv4.ip_unprivileged_port_start": "0"
+            },
             volumes={
                 os.path.abspath(self.workdir): {
                     "bind": "/opt/analysis",
