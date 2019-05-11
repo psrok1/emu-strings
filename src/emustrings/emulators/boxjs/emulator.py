@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 
-from emulators.emulator import Emulator
+from emustrings.emulators import Emulator
 from emustrings.language import JScript, JScriptEncode
 
 

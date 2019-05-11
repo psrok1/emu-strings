@@ -2,7 +2,7 @@ from collections import defaultdict
 import json
 import os
 
-from emulators import Emulator
+from emustrings.emulators import Emulator
 from emustrings import language
 
 
@@ -13,7 +13,7 @@ class WinedropEmulator(Emulator):
         language.VBScript,
         language.VBScriptEncode
     ]
-    IMAGE_NAME = "winedrop"
+    IMAGE_NAME = "winedrop:latest"
 
     def _load_report(self):
         report_path = os.path.join(self.workdir, "report.json")

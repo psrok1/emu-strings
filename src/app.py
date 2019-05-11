@@ -1,14 +1,11 @@
-import os
-
 from io import BytesIO
 
 from flask import Flask, jsonify, request
 
-import daemon
-
 from emustrings import Analysis, Sample, Language
+from emustrings.celery import celery_app
 
-app = Flask("emu-strings", static_folder=os.path.abspath('./web/build'))
+app = Flask("emu-strings", static_folder='/app/build')
 
 
 @app.route("/api/analysis")
@@ -54,7 +51,7 @@ def submit_analysis():
         # Add sample code to analysis
         analysis.add_sample(sample, language)
         # Spawn task to daemon
-        daemon.analyze_sample.apply_async((str(analysis.aid), {}))
+        celery_app.send_task("analyze_sample", args=(str(analysis.aid), {}))
         # Return analysis id
         return jsonify({"aid": str(analysis.aid)})
     except Exception as e:
@@ -75,4 +72,4 @@ def send_files(path='index.html'):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=64205)
+    app.run(host='0.0.0.0', port=80)

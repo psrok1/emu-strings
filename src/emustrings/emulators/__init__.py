@@ -1,11 +1,5 @@
 from .emulator import Emulator
-from .winedrop import WinedropEmulator
-from .boxjs import BoxJSEmulator
-
-emulators = [
-    WinedropEmulator,
-    BoxJSEmulator
-]
+from .loader import emulators, load_images
 
 
 def get_emulators(analysis, **opts):

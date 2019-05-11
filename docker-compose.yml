@@ -1,0 +1,53 @@
+version: "3.7"
+services:
+  emu-app:
+    build:
+      context: ./src
+      dockerfile: Dockerfile-app
+    links:
+      - mongo
+      - redis
+    environment:
+      STATIC_PATH: /app/build/static
+    ports:
+      - "64205:80"
+    volumes:
+      - type: volume
+        source: results
+        target: /app/results
+  emu-daemon:
+    build:
+      context: ./src
+      dockerfile: Dockerfile-daemon
+    links:
+      - dind
+      - mongo
+      - redis
+    environment:
+      DOCKER_HOST: tcp://dind:2375
+    volumes:
+      - type: bind
+        source: ./emulators/images
+        target: /app/images
+      - type: volume
+        source: results
+        target: /app/results
+  mongo:
+    image: mongo
+    volumes:
+      - type: volume
+        source: mongodb
+        target: /data/db
+  redis:
+    image: redis:alpine
+  dind:
+    image: docker:dind
+    privileged: true
+    volumes:
+      - type: volume
+        source: results
+        target: /app/results
+
+volumes:
+  mongodb:
+  results:
