@@ -17,6 +17,7 @@ fi
 
 # Exporting to ./images
 
+echo Exporting winedrop to ./images... this may take a while.
 (
     mkdir -p images &&
     cd images &&
