@@ -35,12 +35,20 @@ ENV WINEDLLOVERRIDES="mscoree,mshtml="
 ENV WINEPREFIX="/opt/wine-prefix"
 ENV WINE="/opt/wine-source/wine"
 RUN echo `head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9_' | fold -w 8 | head -n 1` > /opt/.username
-RUN export USER=`cat /opt/.username` && xvfb-run -a ./wine wineboot -u ; while [ ! -z `pidof wineserver` ]; do ( echo "Waiting for wineserver to exit..."; sleep .6 ); done
+RUN export USER=`cat /opt/.username` \
+    && xvfb-run -a ./wine wineboot -u ; \
+    while [ ! -z `pidof wineserver` ]; \
+        do ( echo "Waiting for wineserver to exit..."; sleep .6 ); done
 # Copy winedrop.dll from winedrop-build-monitor and apply patches
 ADD ./patches /opt/patches
 WORKDIR /opt/patches
 COPY --from=winedrop-build-monitor /opt/monitor/winedrop.dll .
-RUN export USER=`cat /opt/.username` && xvfb-run -a ./patch.sh
+RUN export USER=`cat /opt/.username` && \
+    wget -O- https://raw.githubusercontent.com/Winetricks/winetricks/ccc1c48ffa750c18eec1da317ac392934b68844f/src/winetricks | \
+    sed '0,/WINETRICKS_LIB/ s/WINETRICKS_LIB/no_WINETRICKS_LIB/' > winetricks && \
+    chmod +x winetricks && \
+    xvfb-run -a ./patch.sh && \
+    rm winetricks
 # Set-up emulator daemon
 ADD ./emulator /opt/emulator
 WORKDIR /opt/analysis
