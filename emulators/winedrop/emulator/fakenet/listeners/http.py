@@ -16,6 +16,9 @@ class HTTPListener(FakenetListener):
             def _get_url(self):
                 host = self.headers["Host"] if "Host" in self.headers else self.client_address[0]
                 scheme = "https" if "X-HTTPS" in self.headers else self.SCHEME
+                # Remove redundant :443 for HTTPS requests
+                if scheme == "https" and host.endswith(":443"):
+                    host = host[:-4]
                 path = self.path
                 return "{}://{}{}".format(scheme, host, path)
 

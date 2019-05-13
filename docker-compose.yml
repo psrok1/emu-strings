@@ -47,6 +47,8 @@ services:
       - type: volume
         source: results
         target: /app/results
+      - type: tmpfs
+        target: /var/lib/docker
 
 volumes:
   mongodb:
