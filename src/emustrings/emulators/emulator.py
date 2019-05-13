@@ -70,6 +70,7 @@ class Emulator(object):
             self.IMAGE_NAME,
             detach=True,
             dns=['127.0.0.1'],
+            dns_search=[],
             network_mode="none",
             environment=self.env,
             sysctls={

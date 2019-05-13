@@ -15,4 +15,4 @@ COPY config.py /app/config.py
 COPY emustrings /app/emustrings
 
 WORKDIR /app/
-ENTRYPOINT celery worker -A daemon
+ENTRYPOINT celery worker -A daemon -l info
