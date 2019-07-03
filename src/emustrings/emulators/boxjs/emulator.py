@@ -11,7 +11,7 @@ class BoxJSEmulator(Emulator):
         JScript,
         JScriptEncode,
     ]
-    IMAGE_NAME = "boxjs"
+    IMAGE_NAME = "emus-box-js"
 
     def _local_path(self, fname):
         return os.path.join(self.workdir, self.sample_name+".results", fname)
