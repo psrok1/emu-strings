@@ -4,8 +4,8 @@
 
 **Emu-strings** - JScript/VBScript analyzer based on native Windows Script Host engine.
 
-# How it works?
+## How it works?
 
-# Requirements
+## Requirements
 
-# Installation
+## Installation
