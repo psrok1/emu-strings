@@ -125,8 +125,8 @@ class WSHInstrumentation(object):
             "\x87\x04\x24",          # xchg [esp], eax
             "\x50",                  # push eax
             "\xe8\x00\x00\x00\x00",  # call $+5
-            "\x5a",                  # pop edx
-            "\xff\xa2"               # jmp [edx+...]
+            "\x58",                  # pop eax
+            "\xff\xa0"               # jmp [eax+...]
         ])
         tramp_edx = len(tramp_code)-3
         tramp_rva = []

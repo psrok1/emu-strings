@@ -154,7 +154,8 @@ class WineLauncher(object):
                 "WINEPREFIX": self.WINE_PREFIX,
                 "WINEDLLOVERRIDES": "jscript,vbscript=n",
                 #"WINEDEBUG": "trace+module,imports",
-                "USER": self.get_user()
+                "USER": self.get_user(),
+                "TIMEOUT": self.soft_timeout
             },
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)

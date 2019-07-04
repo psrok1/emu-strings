@@ -4,6 +4,7 @@
 #include <time.h>
 #include "log.h"
 #include "bstrchain.h"
+#include "bench.h"
 
 #ifndef __stdcall
 #define __stdcall __attribute__((stdcall))
@@ -42,7 +43,8 @@ int __stdcall hook_ConcatStrs(fn_ConcatStrs original, PVARStr dest, PVARStr s1, 
 }
 
 /*** 
- * VBSCRIPT.DLL 
+ * VBSCRIPT.DLL
+ * rtConcatBStr is used by VbsVarAdd and VbsVarConcat
  ***/
 
 typedef PVARStr __stdcall (*fn_rtConcatBStr)(wchar_t *s1, wchar_t* s2);
@@ -64,7 +66,7 @@ typedef void __thiscall (*fn_VarClear)(PVARStr var);
 
 void __thiscall hook_VarClear(PVARStr var, fn_VarClear original)
 {
-    if((var->type & 0xFFFF) == 8)
+    if((var->type & 0xFFFF) == 8 || (var->type & 0xFFFF) == 74)
     {
         TBStr_clear(var->val.str);
     }
@@ -81,23 +83,37 @@ void __thiscall hook_VarSetConstBstr(PVARStr var, fn_VarSetConstBstr original, w
 
 // ?FInterrupt@CSession@@QAEHXZ
 
-unsigned int startTime = 0;
+void triggerHalt_VBScript(void* session) {
+    *((unsigned int*)(((char*)session)+0x44)) = 1;
+    *((unsigned int*)(((char*)session)+0x40)) = 0;
+    *((unsigned int*)(((char*)session)+0x4)) = 0;
+}
+
+void triggerHalt_JScript(void* session) {
+    *((unsigned int*)(((char*)session)+0x248)) = 1;
+    *((unsigned int*)(((char*)session)+0x244)) = 0;
+    *((unsigned int*)(((char*)session)+0x4)) = 0;
+}
 
 typedef int __thiscall (*fn_SessionFInterrupt)(void* session);
 
-int __thiscall hook_SessionFInterrupt(void* session, fn_SessionFInterrupt original)
+int __thiscall hook_SessionFInterrupt_JScript(void* session, fn_SessionFInterrupt original)
 {
-    if(startTime == 0)
-    {
-        startTime = time(NULL);
-    }
-    // Trying to force halt interrupt after 45 seconds
-    if(time(NULL) - startTime > 45)
+    if(timeElapsed() > 45)
     {
         log_send('n', "Enforcing shutdown after 45 seconds");
-        *((unsigned int*)(((char*)session)+0x248)) = 1;
-        *((unsigned int*)(((char*)session)+0x244)) = 0;
-        *((unsigned int*)(((char*)session)+0x4)) = 0;
+        triggerHalt_JScript(session);
+    }
+    return original(session);
+}
+
+int __thiscall hook_SessionFInterrupt_VBScript(void* session, fn_SessionFInterrupt original)
+{
+    int result;
+    if(timeElapsed() > 45)
+    {
+        log_send('n', "Enforcing shutdown after 45 seconds");
+        triggerHalt_VBScript(session);
     }
     return original(session);
 }

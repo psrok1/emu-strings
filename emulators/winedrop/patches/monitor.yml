@@ -7,8 +7,10 @@ jscript.dll:
   '?ConcatStrs@@YGJPAVVAR@@00@Z': hook_ConcatStrs
   "?Clear@VAR@@QAEXXZ": hook_VarClear
   "?SetConstBstr@VAR@@QAEXPAGPAVExecBody@@@Z": hook_VarSetConstBstr
-  "?FInterrupt@CSession@@QAEHXZ": hook_SessionFInterrupt
+  "?FInterrupt@CSession@@QAEHXZ": hook_SessionFInterrupt_JScript
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant
   "?rtConcatBstr@@YGPAVVAR@@PAG0@Z": hook_rtConcatBStr
+  "?FInterrupt@CSession@@QAEHXZ": hook_SessionFInterrupt_VBScript
+  "?Clear@VAR@@QAEJXZ": hook_VarClear

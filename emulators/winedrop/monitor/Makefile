@@ -1,9 +1,9 @@
 CC = i686-w64-mingw32-gcc
-
 OBJ =\
 	log.o \
 	bstrchain.o \
-	main.o
+	main.o \
+	bench.o
 
 all: main
 
