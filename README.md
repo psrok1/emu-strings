@@ -4,8 +4,14 @@
 
 **Emu-strings** - JScript/VBScript analyzer based on native Windows Script Host engine.
 
-## How it works?
-
 ## Requirements
 
+   * Linux kernel >= 4.11 (supporting `ip_unprivileged_port_start` sysctl)
+   * Docker & Docker Compose installed
+   * at least 8 GB of RAM (recommended 16 GB)
+
 ## Installation
+
+## How it works?
+
+
