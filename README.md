@@ -34,7 +34,7 @@ Then build an Winedrop image. This may take a while because all components will 
 $ cd emulators ; ./build.sh 
 ```
 
-Finally we can configure and build the emu-strings engine. Start with customizing `docker-compose.yml` depending on your needs. See a few tips below:
+Finally you can configure and build the emu-strings engine. Start with customizing `docker-compose.yml` depending on your needs. See a few tips below:
 
 * Web interface is exposed at `64205` port. If you want to change that, modify `emu-app` service settings. 
 * If you are running in low-memory environment, consider turning off tmpfs mount of `/var/lib/docker` in DinD container. This will drastically drop analysis performance, but will make you save few gigabytes of memory.
@@ -49,8 +49,36 @@ Web interface in default configuration can be found at `http://127.0.0.1:64205`
 
 ## Usage
 
+Go to `Submit file...` and pass the malicious script for analysis. 
 
+[screen]
+
+Default `auto-detect` mode will try to guess script language by looking for characteristic keywords, but keep in mind that it doesn't work for Encoded (jse/vbe) scripts.
+
+After few minutes of waiting the results will be shown:
+
+[screen]
+
+If results are not satisfying and sample execution reached its timeout, expand `Advanced settings` in submission window and try to give it more time. 60 seconds are enough for most samples, but there are few exceptions.
+
+## Box-js integration
+
+Emu-strings includes optional integration with [great tool Box-js made by CapacitorSet](https://github.com/CapacitorSet/box-js). It can be used as a secondary engine for JScript samples. Tool is running both Winedrop and Box-js engines at the same time during analysis, combining the results.
+
+Integration was made mainly for comparison purposes, so it wasn't well-tested. If you still want to include Box-js analyses, just build Docker image using commands presented below:
+
+```bash
+
+$ cd emulators
+$ ( cd boxjs; docker build . -t emus-box-js )
+$ docker save emus-box-js -o images/emus-box-js.tar && chmod 644 emus-box-js.tar
+
+``` 
 
 ## Disclaimer
 
+Project was made mainly for my MSc thesis and should be considered more as PoC rather than production-ready solution. Thesis [can be found here](https://0xcc.pl/static/msc/psrok1-msc.pdf), but it's *"tylko po polsku"* and no English version is planned.
 
+Regardless that fact, I consider emu-strings as good and working platform for further experiments so I intend to develop the tool for malware analysis purposes. Solution was tested on bunch of samples and works pretty well.
+
+In case of any problems, create an issue or [contact me](https://0xcc.pl/contact.html).
