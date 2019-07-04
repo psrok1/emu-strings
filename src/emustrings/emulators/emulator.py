@@ -27,7 +27,7 @@ class Emulator(object):
     def name(self):
         return self.__class__.__name__
 
-    def __init__(self, analysis, **opts):
+    def __init__(self, analysis):
         """
         Creates Emulator instance with additional runtime opts
 
@@ -47,8 +47,8 @@ class Emulator(object):
         self.analysis.sample.store(os.path.join(self.workdir, self.sample_name))
 
         self.env = {
-            "SOFT_TIMEOUT": opts.get("soft_timeout", 60.0),
-            "HARD_TIMEOUT": opts.get("hard_timeout", 90.0),
+            "SOFT_TIMEOUT": int(self.analysis.options.get("soft_timeout", 60)),
+            "HARD_TIMEOUT": int(self.analysis.options.get("hard_timeout", 90)),
             "SAMPLE": self.sample_name,
             "LANGUAGE": str(self.analysis.language)
         }

@@ -50,6 +50,7 @@ class Analysis(object):
         Creates new analysis (with unique id) or gets instance of existing one
         """
         self.sample = self.language = None
+        self.options = None
         self.status = None
 
         """
@@ -80,6 +81,7 @@ class Analysis(object):
             self.status = params["status"]
             self.timestamp = params["timestamp"]
             self.language = Language.get(params["language"])
+            self.options = params.get("options", {})
             sample_path = os.path.join(self.workdir, "{}.{}".format(params["sha256"], self.language.extension))
             self.sample = Sample.load(sample_path)
         except IndexError as e:
@@ -107,13 +109,13 @@ class Analysis(object):
         entries = list(Analysis.db_collection().find(
             last_id_query,
             {"filename": 1, "sha256": 1, "aid": 1, "_id": 1, "timestamp": 1,
-             "status": 1, "language": 1}
+             "status": 1, "language": 1, "options": 1}
         ).sort("_id", -1).limit(limit))
         for entry in entries:
             entry["_id"] = str(entry["_id"])
         return entries
 
-    def add_sample(self, sample: Sample, language=None):
+    def add_sample(self, sample: Sample, language=None, options=None):
         """
         Adds sample to analysis workdir
         """
@@ -121,16 +123,18 @@ class Analysis(object):
             raise Exception("Sample is added yet!")
 
         language = language or Language.detect(sample) or JScript
+        self.sample = sample
+        self.language = language
+        self.options = options or {}
         params = {
             "$set": {
                 "md5": sample.md5,
                 "sha256": sample.sha256,
                 "language": str(language),
-                "filename": sample.name
+                "filename": sample.name,
+                "options": self.options
             }
         }
-        self.sample = sample
-        self.language = language
         self.db_collection().update({"aid": self.aid}, params)
         self.sample.store(os.path.join(self.workdir, sample.sha256) + "." + self.language.extension)
 
@@ -145,15 +149,14 @@ class Analysis(object):
                                     {"$set": params})
         self.status = status
 
-    def start(self, docker_client, opts=None):
-        opts = opts or {}
+    def start(self, docker_client):
         if self.empty:
             raise RuntimeError("Sample must be added before analysis start")
 
         self.set_status(Analysis.STATUS_IN_PROGRESS)
 
         try:
-            emus = get_emulators(self, **opts)
+            emus = get_emulators(self)
             print("Found {} emulators".format(len(emus)))
             for emu in emus:
                 print("Started in {}".format(emu.name))
@@ -177,5 +180,6 @@ class Analysis(object):
             "status": self.status,
             "timestamp": self.timestamp,
             "language": str(self.language),
-            "results": self.results.store()
+            "results": self.results.store(),
+            "options": self.options
         }

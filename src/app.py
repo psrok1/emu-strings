@@ -1,3 +1,5 @@
+import json
+
 from io import BytesIO
 
 from flask import Flask, jsonify, request
@@ -34,7 +36,6 @@ def submit_analysis():
         file = request.files.get('file')
         if not file:
             raise Exception("File not specified")
-
         # Create BytesIO pseudo-file and store file from request
         strfd = BytesIO()
         file.save(strfd)
@@ -43,15 +44,16 @@ def submit_analysis():
         # Create new analysis
         analysis = Analysis()
         sample = Sample(code, file.filename)
-        language = request.form.get("language", "auto-detect")
+        options = json.loads(request.form.get("options", "{}"))
+        language = options.get("language", "auto-detect")
         if language == "auto-detect":
             language = None
         else:
             language = Language.get(request.form.get("language"))
         # Add sample code to analysis
-        analysis.add_sample(sample, language)
+        analysis.add_sample(sample, language, options)
         # Spawn task to daemon
-        celery_app.send_task("analyze_sample", args=(str(analysis.aid), {}))
+        celery_app.send_task("analyze_sample", args=(str(analysis.aid),))
         # Return analysis id
         return jsonify({"aid": str(analysis.aid)})
     except Exception as e:

@@ -68,8 +68,8 @@ class WineLauncher(object):
 
     def __init__(self):
         self.report = report.Report()
-        self.soft_timeout = float(os.getenv("SOFT_TIMEOUT", 30.0))
-        self.hard_timeout = float(os.getenv("HARD_TIMEOUT", 60.0))
+        self.soft_timeout = os.getenv("SOFT_TIMEOUT", 30.0)
+        self.hard_timeout = os.getenv("HARD_TIMEOUT", 60.0)
         self.sample = os.getenv("SAMPLE")
         self.engine = os.getenv("LANGUAGE")
 
@@ -144,7 +144,7 @@ class WineLauncher(object):
         return True
 
     def analyze_script(self):
-        timeout = gevent.Timeout(self.hard_timeout)
+        timeout = gevent.Timeout(float(self.hard_timeout))
         timeout.start()
 
         log.info("Starting {} using {} engine".format(self.sample, self.engine))

@@ -95,13 +95,15 @@ void triggerHalt_JScript(void* session) {
     *((unsigned int*)(((char*)session)+0x4)) = 0;
 }
 
+unsigned int softTimeout = 45;
+
 typedef int __thiscall (*fn_SessionFInterrupt)(void* session);
 
 int __thiscall hook_SessionFInterrupt_JScript(void* session, fn_SessionFInterrupt original)
 {
-    if(timeElapsed() > 45)
+    if(timeElapsed() > softTimeout)
     {
-        log_send('n', "Enforcing shutdown after 45 seconds");
+        log_send('n', "Enforcing shutdown after %d seconds", softTimeout);
         triggerHalt_JScript(session);
     }
     return original(session);
@@ -110,9 +112,9 @@ int __thiscall hook_SessionFInterrupt_JScript(void* session, fn_SessionFInterrup
 int __thiscall hook_SessionFInterrupt_VBScript(void* session, fn_SessionFInterrupt original)
 {
     int result;
-    if(timeElapsed() > 45)
+    if(timeElapsed() > softTimeout)
     {
-        log_send('n', "Enforcing shutdown after 45 seconds");
+        log_send('n', "Enforcing shutdown after %d seconds", softTimeout);
         triggerHalt_VBScript(session);
     }
     return original(session);
@@ -218,10 +220,16 @@ BOOL WINAPI DllMain(
     DWORD fdwReason,     // reason for calling function
     LPVOID lpReserved )  // reserved
 {
+    char timeoutBuf[32];
     if(fdwReason == DLL_PROCESS_ATTACH)
     {
         log_init();
         log_send('n', "Monitor started");
+        if(GetEnvironmentVariable("TIMEOUT", timeoutBuf, 31))
+        {
+            softTimeout = atoi(timeoutBuf);
+            log_send('n', "Soft timeout set to %d", softTimeout);
+        }
     } else if(fdwReason == DLL_PROCESS_DETACH)
     {
         log_send('n', "Graceful shutdown");

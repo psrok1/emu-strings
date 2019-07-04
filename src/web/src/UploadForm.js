@@ -57,8 +57,12 @@ class UploadForm extends Component {
     handleSubmit = (ev) => {
         ev.preventDefault();
         let form = new FormData();
-        form.set('language', this.state.language)
         form.set('file', this.state.fileSelected)
+        form.set('options', JSON.stringify({
+            soft_timeout: this.state.softTimeout,
+            hard_timeout: this.state.hardTimeout,
+            language: this.state.language
+        }))
         axios.post("/api/submit", form)
              .then(response => {
                  this.props.history.push(`/analysis/${response.data.aid}`);
