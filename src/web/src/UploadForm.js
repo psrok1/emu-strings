@@ -9,8 +9,8 @@ class UploadForm extends Component {
         language: "auto-detect",
         fileSelected: null,
         advancedCollapsed: false,
-        softTimeout: 30,
-        hardTimeout: 60
+        softTimeout: 60,
+        killAfterNext: 30,
     }
   
     handleFileChange = (acceptedFiles) => {
@@ -42,16 +42,13 @@ class UploadForm extends Component {
     }
 
     handleSoftTimeoutChange = (ev) => {
-        let softTimeout = Math.max(15, Math.min(600, ev.target.value));
-        this.setState({
-            softTimeout: softTimeout,
-            hardTimeout: Math.max(softTimeout, this.state.hardTimeout)
-        });
+        let softTimeout = ev.target.value;
+        this.setState({softTimeout});
     }
 
-    handleHardTimeoutChange = (ev) => {
-        let hardTimeout = Math.max(this.state.softTimeout, Math.min(600, ev.target.value));
-        this.setState({hardTimeout});
+    handleKillAfterNextChange = (ev) => {
+        let killAfterNext = ev.target.value;
+        this.setState({killAfterNext});
     }
 
     handleSubmit = (ev) => {
@@ -59,8 +56,8 @@ class UploadForm extends Component {
         let form = new FormData();
         form.set('file', this.state.fileSelected)
         form.set('options', JSON.stringify({
-            soft_timeout: this.state.softTimeout,
-            hard_timeout: this.state.hardTimeout,
+            soft_timeout: Math.max(15, Math.min(600, this.state.softTimeout)),
+            hard_timeout: Math.max(15, Math.min(600, this.state.killAfterNext)) + this.state.softTimeout,
             language: this.state.language
         }))
         axios.post("/api/submit", form)
@@ -120,27 +117,13 @@ class UploadForm extends Component {
                                 </div>
                             </div>
                             <div class="form-group row text-left">
-                                <label for="hard-timeout" class="col-sm-3 col-form-label">Force timeout</label>
+                                <label for="kill-after-next" class="col-sm-3 col-form-label">Kill after next</label>
                                 <div class="col-sm-9">
                                     <input className="form-control"
-                                           name="hard-timeout"
+                                           name="kill-after-next"
                                            type="number"
-                                           value={this.state.hardTimeout}
-                                           onChange={this.handleHardTimeoutChange}/>
-                                </div>
-                            </div>
-                            <div class="form-group row text-left text-muted">
-                                <label for="language" class="col-sm-3 col-form-label">Internet access</label>
-                                <div class="col-sm-9">
-                                    <input type="checkbox"/>
-                                    (not supported yet)
-                                </div>
-                            </div>
-                            <div class="form-group row text-left text-muted">
-                                <label for="language" class="col-sm-3 col-form-label">Verbose logging</label>
-                                <div class="col-sm-9">
-                                    <input type="checkbox"/>
-                                    (not supported yet)
+                                           value={this.state.killAfterNext}
+                                           onChange={this.handleKillAfterNextChange}/>
                                 </div>
                             </div>
                         </div>
