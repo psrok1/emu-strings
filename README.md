@@ -6,7 +6,7 @@
 
 The main idea is to provide a tool which reveal all useful *strings* that occur during script execution. In most cases, strings are heavily obfuscated and evaluated at runtime. These are including useful IoCs such as distribution site URLs, OLE Automation object identifiers, eval'ed code snippets etc.
 
-[example]
+![](docs/results.png)
 
 Solution is based on binary-instrumented Windows Script Host engine which is executed in Wine environment. Wine is running inside Docker containers providing separation between concurrently executing instances. 
 
@@ -51,13 +51,13 @@ Web interface in default configuration can be found at `http://127.0.0.1:64205`
 
 Go to `Submit file...` and pass the malicious script for analysis. 
 
-[screen]
+![](docs/submit.png)
 
 Default `auto-detect` mode will try to guess script language by looking for characteristic keywords, but keep in mind that it doesn't work for Encoded (jse/vbe) scripts.
 
 After few minutes of waiting the results will be shown:
 
-[screen]
+![](docs/analysis.png)
 
 If results are not satisfying and sample execution reached its timeout, expand `Advanced settings` in submission window and try to give it more time. 60 seconds are enough for most samples, but there are few exceptions.
 
