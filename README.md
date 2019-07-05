@@ -37,6 +37,7 @@ $ cd emulators ; ./build.sh
 Finally you can configure and build the emu-strings engine. Start with customizing `docker-compose.yml` depending on your needs. See a few tips below:
 
 * Web interface is exposed at `64205` port. If you want to change that, modify `emu-app` service settings. 
+* Limit of concurrent analyzer instances is set to 4. If you want to run more - set `emu-daemon.build.args.concurrent` value.
 * If you are running in low-memory environment, consider turning off tmpfs mount of `/var/lib/docker` in DinD container. This will drastically drop analysis performance, but will make you save few gigabytes of memory.
 
 After customizing `docker-compose.yml` just build application and run.
