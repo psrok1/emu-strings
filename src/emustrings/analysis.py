@@ -83,7 +83,7 @@ class Analysis(object):
             self.language = Language.get(params["language"])
             self.options = params.get("options", {})
             sample_path = os.path.join(self.workdir, "{}.{}".format(params["sha256"], self.language.extension))
-            self.sample = Sample.load(sample_path)
+            self.sample = Sample.load(sample_path, params["filename"])
         except IndexError as e:
             raise IOError("Analysis {} is corrupted!".format(aid)) from e
 

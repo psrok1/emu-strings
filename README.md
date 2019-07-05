@@ -70,9 +70,9 @@ Integration was made mainly for comparison purposes, so it wasn't well-tested. I
 
 ```bash
 
-$ cd emulators
-$ ( cd boxjs; docker build . -t emus-box-js )
-$ docker save emus-box-js -o images/emus-box-js.tar && chmod 644 emus-box-js.tar
+cd emulators
+( cd boxjs; docker build . -t emus-box-js )
+docker save emus-box-js -o images/emus-box-js.tar && chmod 644 emus-box-js.tar
 
 ``` 
 

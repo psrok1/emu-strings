@@ -34,10 +34,9 @@ class Sample(object):
         return self.extension
 
     @staticmethod
-    def load(path):
+    def load(path, name):
         with open(path, "rb") as f:
             code = f.read()
-        name = os.path.basename(path)
         return Sample(code, name)
 
     def store(self, path):
