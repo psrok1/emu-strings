@@ -49,7 +49,7 @@ def submit_analysis():
         if language == "auto-detect":
             language = None
         else:
-            language = Language.get(request.form.get("language"))
+            language = Language.get(language)
         # Add sample code to analysis
         analysis.add_sample(sample, language, options)
         # Spawn task to daemon
