@@ -1,8 +1,24 @@
+language: python
+
 services:
   - docker
 
 jobs:
   include:
-    - stage: winedrop
-      name: 'Build Winedrop'
-      script: 'docker build . -t winedrop'
+    - stage: build_emulators
+      name: 'Build Winedrop emulator'
+      env:
+        - IMAGE_NAME=psrok1/emu-strings-winedrop
+        - DOCKERFILE_PATH=./emulators/winedrop
+      before_script:
+        - docker pull "{IMAGE_NAME}:develop" || true
+      script:
+        - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
+    - name: 'Build Box-js emulator'
+      env:
+        - IMAGE_NAME=psrok1/emu-strings-boxjs
+        - DOCKERFILE_PATH=./emulators/boxjs
+      before_script:
+        - docker pull "{IMAGE_NAME}:develop" || true
+      script:
+        - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
