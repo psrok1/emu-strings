@@ -19,6 +19,8 @@ jobs:
       deploy:
         provider: script
         script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
+        on:
+          branch: travis-ci
     - name: 'Build Box-js emulator'
       env:
         - IMAGE_NAME=psrok1/emu-strings-boxjs
@@ -35,3 +37,5 @@ jobs:
       deploy:
         provider: script
         script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
+        on:
+          branch: travis-ci
