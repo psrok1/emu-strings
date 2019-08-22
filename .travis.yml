@@ -1,0 +1,8 @@
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: winedrop
+      name: 'Build Winedrop'
+      script: 'docker build . -t winedrop'
