@@ -1,8 +1,5 @@
-language: python
-
 services:
   - docker
-
 jobs:
   include:
     - stage: build_emulators
@@ -14,6 +11,14 @@ jobs:
         - docker pull "{IMAGE_NAME}:develop" || true
       script:
         - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
+      before_deploy:
+        - docker login -u "$REGISTRY_USER" -p "REGISTRY_PASS"
+        - git_sha="$(git rev-parse --short HEAD)"
+        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:develop"
+        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${git_sha}-develop"
+      deploy:
+        provider: script
+        script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
     - name: 'Build Box-js emulator'
       env:
         - IMAGE_NAME=psrok1/emu-strings-boxjs
@@ -22,3 +27,11 @@ jobs:
         - docker pull "{IMAGE_NAME}:develop" || true
       script:
         - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
+      before_deploy:
+        - docker login -u "$REGISTRY_USER" -p "REGISTRY_PASS"
+        - git_sha="$(git rev-parse --short HEAD)"
+        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:develop"
+        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${git_sha}-develop"
+      deploy:
+        provider: script
+        script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
