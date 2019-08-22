@@ -8,7 +8,7 @@ jobs:
         - IMAGE_NAME=psrok1/winedrop
         - DOCKERFILE_PATH=./emulators/winedrop
       before_script:
-        - docker pull "{IMAGE_NAME}:develop" || true
+        - docker pull "${IMAGE_NAME}:develop" || true
       script:
         - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
       before_deploy:
@@ -26,7 +26,7 @@ jobs:
         - IMAGE_NAME=psrok1/emu-strings-boxjs
         - DOCKERFILE_PATH=./emulators/boxjs
       before_script:
-        - docker pull "{IMAGE_NAME}:develop" || true
+        - docker pull "${IMAGE_NAME}:develop" || true
       script:
         - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
       before_deploy:
