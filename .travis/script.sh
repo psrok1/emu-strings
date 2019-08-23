@@ -8,7 +8,7 @@ if ! ( docker pull "${IMAGE_NAME}:${BRANCH}" ); then
     docker pull "${IMAGE_NAME}:${BRANCH}" || true
 fi
 
-if [[ ! -d "$DOCKERFILE "]]; then
+if [ ! -d "$DOCKERFILE "]; then
     DOCKERFILE="${DOCKERFILE_PATH}/Dockerfile"
 fi
 
