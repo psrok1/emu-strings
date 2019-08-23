@@ -7,35 +7,19 @@ jobs:
       env:
         - IMAGE_NAME=psrok1/winedrop
         - DOCKERFILE_PATH=./emulators/winedrop
-      before_script:
-        - docker pull "${IMAGE_NAME}:develop" || true
-      script:
-        - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
-      before_deploy:
-        - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
-        - git_sha="$(git rev-parse --short HEAD)"
-        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:develop"
-        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${git_sha}-develop"
+      script: ./.travis/emulator-script.sh
       deploy:
         provider: script
-        script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
+        script: ./.travis/emulator-deploy.sh
         on:
           branch: travis-ci
     - name: 'Build Box-js emulator'
       env:
         - IMAGE_NAME=psrok1/emu-strings-boxjs
         - DOCKERFILE_PATH=./emulators/boxjs
-      before_script:
-        - docker pull "${IMAGE_NAME}:develop" || true
-      script:
-        - docker build --pull --cache-from "${IMAGE_NAME}:develop" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
-      before_deploy:
-        - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
-        - git_sha="$(git rev-parse --short HEAD)"
-        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:develop"
-        - docker tag "$IMAGE_NAME" "${IMAGE_NAME}:${git_sha}-develop"
+      script: ./.travis/emulator-script.sh
       deploy:
         provider: script
-        script: docker push "${IMAGE_NAME}:develop" && docker push "${IMAGE_NAME}:${git_sha}-develop"
+        script: ./.travis/emulator-deploy.sh
         on:
           branch: travis-ci
