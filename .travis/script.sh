@@ -12,4 +12,4 @@ if [[ ! -d "$DOCKERFILE "]]; then
     DOCKERFILE="${DOCKERFILE_PATH}/Dockerfile"
 fi
 
-docker build --pull --cache-from "${IMAGE_NAME}:${BRANCH}" --tag "$IMAGE_NAME" "$DOCKERFILE_PATH"
+docker build --pull --cache-from "${IMAGE_NAME}:${BRANCH}" --tag "$IMAGE_NAME" --file "$DOCKERFILE" "$DOCKERFILE_PATH"
