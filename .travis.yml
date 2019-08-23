@@ -7,19 +7,19 @@ jobs:
       env:
         - IMAGE_NAME=psrok1/winedrop
         - DOCKERFILE_PATH=./emulators/winedrop
-      script: ./.travis/emulator-script.sh
+      script: ./.travis/script.sh
       deploy:
         provider: script
-        script: ./.travis/emulator-deploy.sh
+        script: ./.travis/deploy.sh
         on:
-          branch: travis-ci
+          all_branches: true
     - name: 'Build Box-js emulator'
       env:
         - IMAGE_NAME=psrok1/emu-strings-boxjs
         - DOCKERFILE_PATH=./emulators/boxjs
-      script: ./.travis/emulator-script.sh
+      script: ./.travis/script.sh
       deploy:
         provider: script
-        script: ./.travis/emulator-deploy.sh
+        script: ./.travis/deploy.sh
         on:
-          branch: travis-ci
+          all_branches: true
