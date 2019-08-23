@@ -23,3 +23,24 @@ jobs:
         script: ./.travis/deploy.sh
         on:
           all_branches: true
+    - stage: build
+      name: 'Build emu-strings app'
+      env:
+        - IMAGE_NAME=psrok1/emu-strings
+        - DOCKERFILE_PATH=./src/Dockerfile-app
+      script: ./.travis/script.sh
+      deploy:
+        provider: script
+        script: ./.travis/deploy.sh
+        on:
+          all_branches: true
+    - name: 'Build emu-strings daemon'
+      env:
+        - IMAGE_NAME=psrok1/emu-strings-daemon
+        - DOCKERFILE_PATH=./src/Dockerfile-daemon
+      script: ./.travis/script.sh
+      deploy:
+        provider: script
+        script: ./.travis/deploy.sh
+        on:
+          all_branches: true
