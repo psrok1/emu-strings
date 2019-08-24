@@ -4,6 +4,7 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile-app
+      image: psrok1/emu-strings
     links:
       - mongo
       - redis
@@ -19,6 +20,7 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile-daemon
+      image: psrok1/emu-strings-daemon
       args:
         concurrent: 4
     links:

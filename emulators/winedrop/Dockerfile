@@ -1,12 +1,4 @@
 # STAGE 1 === === === ===
-# Building wine from sources
-FROM i386/ubuntu AS winedrop-build
-RUN apt update && apt install -y build-essential gcc-multilib flex bison libxi-dev libfreetype6-dev libxcursor-dev libxrandr-dev libxcomposite-dev libtiff5-dev libxrender-dev libxml2-dev libxslt1-dev libjpeg-dev
-COPY wine-source /opt/wine-source
-WORKDIR /opt/wine-source
-RUN ( if [ ! -f ./wine-source/Makefile ]; then ./configure; else true; fi; ) && make -j4
-
-# STAGE 2 === === === ===
 # Building monitor image
 FROM i386/ubuntu AS winedrop-build-monitor
 RUN apt update -y && apt -y install mingw-w64 make
@@ -14,7 +6,7 @@ ADD ./monitor /opt/monitor
 WORKDIR /opt/monitor
 RUN make
 
-# STAGE 3 === === === ===
+# STAGE 2 === === === ===
 # Building emulator image
 FROM ubuntu
 RUN dpkg --add-architecture i386 && apt update && apt-get install -y gcc-multilib python-pip libxml2:i386 libgnutls30:i386 xvfb:i386 wget cabextract
@@ -29,14 +21,14 @@ RUN groupadd -g 9999 emustrings && \
     chown -R emustrings:emustrings /opt
 USER emustrings
 # Initialize wine-prefix
-WORKDIR /opt/wine-source
-COPY --from=winedrop-build /opt/wine-source .
+WORKDIR /opt/wine-dist
+COPY --from=psrok1/wine-modified /opt/wine-dist .
 ENV WINEDLLOVERRIDES="mscoree,mshtml="
 ENV WINEPREFIX="/opt/wine-prefix"
-ENV WINE="/opt/wine-source/wine"
+ENV WINE="/opt/wine-dist/usr/local/bin/wine"
 RUN echo `head -c 500 /dev/urandom | tr -dc 'a-zA-Z0-9_' | fold -w 8 | head -n 1` > /opt/.username
 RUN export USER=`cat /opt/.username` \
-    && xvfb-run -a ./wine wineboot -u ; \
+    && xvfb-run -a $WINE wineboot -u ; \
     while [ ! -z `pidof wineserver` ]; \
         do ( echo "Waiting for wineserver to exit..."; sleep .6 ); done
 # Copy winedrop.dll from winedrop-build-monitor and apply patches
