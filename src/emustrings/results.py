@@ -118,7 +118,7 @@ class ResultsStore(object):
             "sha256": snip_id
         }
         snip_sample = Sample(snippet)
-        self._look_for_url(snip_sample.str_code, ("snippet", snip_id))
+        self._look_for_url(snip_sample.stringified_code, ("snippet", snip_id))
 
     def add_logfile(self, emulator, key, path):
         if emulator.name not in self.logfiles:
@@ -129,16 +129,6 @@ class ResultsStore(object):
                                               "{}-{}".format(emulator.name, key),
                                               path)
         self.logfiles[emulator.name][key] = logfile_path
-
-    def process(self, emulator):
-        for connection in emulator.connections():
-            self.add_url(connection, "connection")
-        for string in emulator.strings():
-            self.add_string(string)
-        for snippet in emulator.snippets():
-            self.add_snippet(snippet)
-        for logfile in emulator.logfiles():
-            self.add_logfile(emulator, *logfile)
 
     def load(self, params):
         self.strings = set(params.get("strings", []))

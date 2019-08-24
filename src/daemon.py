@@ -1,11 +1,14 @@
 import docker
+import logging
 
 from emustrings import Analysis
 from emustrings.celery import celery_app
-from emustrings.emulators import load_images
+from emustrings.emulators import load_emulators
+
+logging.basicConfig(level=logging.INFO)
 
 docker_client = docker.from_env()
-load_images(docker_client)
+load_emulators(docker_client)
 
 
 @celery_app.task(name="analyze_sample", ignore_result=True)

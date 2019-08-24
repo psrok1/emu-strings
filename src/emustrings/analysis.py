@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 
@@ -6,12 +7,10 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 
-from config import StorageConfig, MongoConfig
-
-from .emulators import get_emulators
-from .language import Language, JScript
 from .results import ResultsStore
 from .sample import Sample
+
+logger = logging.getLogger(__name__)
 
 
 class Analysis(object):
@@ -24,19 +23,24 @@ class Analysis(object):
     STATUS_FAILED = "failed"
     STATUS_ORPHANED = "orphaned"
 
+    MONGODB_URL = "mongodb://mongo:27017/"
+    MONGODB_NAME = "emu-strings"
+
+    ANALYSIS_PATH = "/app/results/analysis/"
+
     @staticmethod
     def db_collection():
         """
         Returns MongoDB collection for analysis objects
         """
-        return MongoClient(MongoConfig.DB_URL)[MongoConfig.DB_NAME].analyses
+        return MongoClient(Analysis.MONGODB_URL)[Analysis.MONGODB_NAME].analyses
 
     @property
     def workdir(self):
         """
         Getter for analysis working dir (mounted in container during emulation)
         """
-        return os.path.join(StorageConfig.ANALYSIS_PATH, str(self.aid))
+        return os.path.join(self.ANALYSIS_PATH, str(self.aid))
 
     @property
     def empty(self):
@@ -59,7 +63,7 @@ class Analysis(object):
         if aid is None:
             self.aid = str(uuid.uuid4())
             os.makedirs(self.workdir)
-            self.results = ResultsStore(self.workdir)
+            self.storage = ResultsStore(self.workdir)
             self.db_collection().insert({
                 "aid": self.aid,
                 "status": self.STATUS_PENDING,
@@ -80,15 +84,13 @@ class Analysis(object):
             params = self.db_collection().find_one({"aid": aid})
             self.status = params["status"]
             self.timestamp = params["timestamp"]
-            self.language = Language.get(params["language"])
+            self.sample = Sample.load(self.workdir, params["sample"])
             self.options = params.get("options", {})
-            sample_path = os.path.join(self.workdir, "{}.{}".format(params["sha256"], self.language.extension))
-            self.sample = Sample.load(sample_path, params["filename"])
         except IndexError as e:
             raise IOError("Analysis {} is corrupted!".format(aid)) from e
 
-        self.results = ResultsStore(self.workdir)
-        self.results.load(params)
+        self.storage = ResultsStore(self.workdir)
+        self.storage.load(params)
 
     @staticmethod
     def find_analysis(sample):
@@ -115,29 +117,6 @@ class Analysis(object):
             entry["_id"] = str(entry["_id"])
         return entries
 
-    def add_sample(self, sample: Sample, language=None, options=None):
-        """
-        Adds sample to analysis workdir
-        """
-        if not self.empty:
-            raise Exception("Sample is added yet!")
-
-        language = language or Language.detect(sample) or JScript
-        self.sample = sample
-        self.language = language
-        self.options = options or {}
-        params = {
-            "$set": {
-                "md5": sample.md5,
-                "sha256": sample.sha256,
-                "language": str(language),
-                "filename": sample.name,
-                "options": self.options
-            }
-        }
-        self.db_collection().update({"aid": self.aid}, params)
-        self.sample.store(os.path.join(self.workdir, sample.sha256) + "." + self.language.extension)
-
     def set_status(self, status, exc=None):
         """
         Sets analysis status
@@ -149,29 +128,55 @@ class Analysis(object):
                                     {"$set": params})
         self.status = status
 
+    def add_sample(self, sample: Sample, options=None):
+        """
+        Adds sample to analysis workdir
+        """
+        if not self.empty:
+            raise Exception("Sample is added yet!")
+
+        self.sample = sample
+        self.options = options or {}
+        params = {
+            "$set": {
+                "sample": sample.to_dict(),
+                "options": self.options
+            }
+        }
+        self.db_collection().update({"aid": self.aid}, params)
+        self.sample.store(self.workdir)
+        logging.info("%s: Added sample %s for analysis", self.aid, str(self.sample))
+
     def start(self, docker_client):
+        from .emulators import get_emulators
+
         if self.empty:
             raise RuntimeError("Sample must be added before analysis start")
 
         self.set_status(Analysis.STATUS_IN_PROGRESS)
 
         try:
-            emus = get_emulators(self)
-            print("Found {} emulators".format(len(emus)))
-            for emu in emus:
-                print("Started in {}".format(emu.name))
-                emu.start(docker_client)
+            emulators = [emulator() for emulator in get_emulators(self.sample.language)]
+            for emulator in emulators:
+                logging.info("%s: Emulation started using %s (%s)", self.aid, emulator.name, emulator.emuid)
+                emulator.start(
+                    docker_client,
+                    self.sample,
+                    self.options)
 
-            for emu in emus:
-                emu.join()
-                self.results.process(emu)
+            for emulator in emulators:
+                emulator.join()
+                logging.info("%s: Emulation finished using %s (%s)", self.aid, emulator.name, emulator.emuid)
+                emulator.store_results(self.storage)
+
+            logging.info("%s: Done", self.aid)
 
             self.db_collection().update({"aid": self.aid},
-                                        {"$set": self.results.store()})
+                                        {"$set": self.storage.store()})
             self.set_status(Analysis.STATUS_SUCCESS)
-        except Exception as e:
+        except Exception as exc:
             import traceback
-            traceback.print_exc()
+            logging.exception("%s: Critical error occured", self.aid)
             self.set_status(Analysis.STATUS_FAILED, traceback.format_exc())
 
     def to_dict(self):
@@ -180,6 +185,6 @@ class Analysis(object):
             "status": self.status,
             "timestamp": self.timestamp,
             "language": str(self.language),
-            "results": self.results.store(),
+            "results": self.storage.store(),
             "options": self.options
         }

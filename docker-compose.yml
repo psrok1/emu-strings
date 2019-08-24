@@ -1,10 +1,10 @@
 version: "3.7"
 services:
   emu-app:
+    image: psrok1/emu-strings
     build:
       context: ./src
       dockerfile: Dockerfile-app
-      image: psrok1/emu-strings
     links:
       - mongo
       - redis
@@ -17,10 +17,10 @@ services:
         source: results
         target: /app/results
   emu-daemon:
+    image: psrok1/emu-strings-daemon
     build:
       context: ./src
       dockerfile: Dockerfile-daemon
-      image: psrok1/emu-strings-daemon
       args:
         concurrent: 4
     links:
@@ -47,13 +47,14 @@ services:
   dind:
     image: docker:dind
     privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
     volumes:
       - type: volume
         source: results
         target: /app/results
       - type: tmpfs
         target: /var/lib/docker
-
 volumes:
   mongodb:
   results:

@@ -1,11 +1,14 @@
 import json
+import logging
 
 from io import BytesIO
 
 from flask import Flask, jsonify, request
 
-from emustrings import Analysis, Sample, Language
+from emustrings import Analysis, Sample
 from emustrings.celery import celery_app
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask("emu-strings", static_folder='/app/build')
 
@@ -27,7 +30,7 @@ def get_analysis(aid):
 @app.route("/api/analysis/<aid>/<key>/<identifier>")
 def get_artifact(aid, key, identifier):
     entry = Analysis.get_analysis(aid)
-    return entry.results.load_element(key, identifier)
+    return entry.storage.load_element(key, identifier)
 
 
 @app.route("/api/submit", methods=["POST"])
@@ -43,15 +46,13 @@ def submit_analysis():
         code = strfd.getvalue()
         # Create new analysis
         analysis = Analysis()
-        sample = Sample(code, file.filename)
         options = json.loads(request.form.get("options", "{}"))
         language = options.get("language", "auto-detect")
         if language == "auto-detect":
             language = None
-        else:
-            language = Language.get(language)
+        sample = Sample(code, file.filename, language)
         # Add sample code to analysis
-        analysis.add_sample(sample, language, options)
+        analysis.add_sample(sample, options)
         # Spawn task to daemon
         celery_app.send_task("analyze_sample", args=(str(analysis.aid),))
         # Return analysis id

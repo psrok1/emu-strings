@@ -1,9 +1,16 @@
 class Language(object):
+    """
+    Language definition
+    """
     registered = []
 
-    def __init__(self, ident, ext):
-        self.identifier = ident
-        self.extension = ext
+    def __init__(self, identifier, extension):
+        """
+        :param identifier: Windows Script Host engine name (language identifier)
+        :param extension: File extension
+        """
+        self.identifier = identifier
+        self.extension = extension
         Language.registered.append(self)
 
     def __eq__(self, other):
@@ -19,7 +26,7 @@ class Language(object):
     @staticmethod
     def get(name):
         languages = Language.registered
-        return languages[languages.index(name)]
+        return name and languages[languages.index(name)]
 
     def match(self, sample):
         return self == sample.extension

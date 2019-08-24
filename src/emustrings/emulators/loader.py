@@ -1,28 +1,83 @@
+import logging
 import os
 
-from .boxjs import BoxJSEmulator
+from typing import Type, List, Iterator, cast
+
+from docker import DockerClient
+import docker.errors
+
+from .emulator import Emulator
+from ..language import Language
+
+logger = logging.getLogger(__name__)
+
+IMAGES_PATH = "/app/images"
+LOADED_EMULATORS: List[Type[Emulator]] = []
+
 from .winedrop import WinedropEmulator
+from .boxjs import BoxJSEmulator
 
 
-emulators = [
-    WinedropEmulator,
-    BoxJSEmulator
-]
-
-
-def load_images(docker_client):
-    loaded = []
-    for image_file in os.listdir("/app/images"):
+def _preload_images(docker_client: DockerClient):
+    """
+    Load images stored in IMAGES_PATH into Docker server
+    :param docker_client: Docker client instance
+    """
+    for image_file in os.listdir(IMAGES_PATH):
         if image_file.endswith(".tar"):
-            image_path = os.path.join("/app/images", image_file)
+            image_path = os.path.join(IMAGES_PATH, image_file)
             with open(image_path, "rb") as f:
-                print("Loading images from {}".format(image_path))
                 images = docker_client.images.load(f.read())
                 for image in images:
-                    loaded += image.tags
+                    logger.info("%s loaded from %s", image.tags, image_file)
+
+
+def load_emulators(docker_client: DockerClient):
+    """
+    Load images for emulators
+    :param docker_client: Docker client instance
+    :param emulators: Available emulators
+    :return: Emulators for which the image was loaded
+    """
+    global LOADED_EMULATORS
+
+    emulators = cast(List[Type[Emulator]], Emulator.__subclasses__())
+
+    if not docker_client.images.list():
+        logger.info("No images found on server - preloading from %s", IMAGES_PATH)
+        _preload_images(docker_client)
+
     for emulator in emulators:
-        if emulator.IMAGE_NAME in loaded:
-            print("Loaded {}".format(emulator.__name__))
-        else:
-            print("Unloaded {}".format(emulator.__name__))
-            emulator.SUPPORTED_LANGUAGES = []
+        if emulator.DISABLED:
+            logger.info("%s is disabled and won't be loaded", emulator.__name__)
+            continue
+        try:
+            # Check whether image is loaded on server
+            docker_client.images.get(emulator.IMAGE_NAME)
+            logger.info("%s required by %s found on server",
+                        emulator.IMAGE_NAME,
+                        emulator.__name__)
+        except docker.errors.ImageNotFound:
+            try:
+                # Pull image if not loaded
+                logger.info("%s not loaded - pulling from registry", emulator.IMAGE_NAME)
+                docker_client.images.pull(emulator.IMAGE_NAME)
+                logger.info("%s pulled successfully", emulator.IMAGE_NAME)
+            except docker.errors.ImageNotFound:
+                logger.warning("Can't load %s: image %s doesn't exist",
+                               emulator.__name__,
+                               emulator.IMAGE_NAME)
+                # Don't load emulator
+                continue
+        # Emulator is ready
+        LOADED_EMULATORS.append(emulator)
+
+
+def get_emulators(language: Language) -> Iterator[Type[Emulator]]:
+    """
+    Get emulators for specified language
+    :param language: Script language
+    """
+    for emulator in LOADED_EMULATORS:
+        if emulator.supports(language):
+            yield emulator

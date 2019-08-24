@@ -12,9 +12,10 @@ class BoxJSEmulator(Emulator):
         JScriptEncode,
     ]
     IMAGE_NAME = "psrok1/emu-strings-boxjs"
+    DISABLED = not bool(os.getenv("ENABLE_BOXJS", ""))
 
     def _local_path(self, fname):
-        return os.path.join(self.workdir, self.sample_name+".results", fname)
+        return os.path.join(self.workdir, self.sample.name+".results", fname)
 
     def _get_urls(self):
         urls_path = self._local_path("urls.json")

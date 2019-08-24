@@ -26,7 +26,6 @@ RUN addgroup -g 9999 emustrings && \
 USER emustrings
 
 COPY app.py /app/app.py
-COPY config.py /app/config.py
 COPY uwsgi.ini /app/uwsgi.ini
 COPY emustrings /app/emustrings
 
