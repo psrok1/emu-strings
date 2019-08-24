@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 
-from emustrings.emulators import Emulator
+from emustrings.emulators import Emulator, with_tag
 from emustrings.language import JScript, JScriptEncode
 
 
@@ -11,7 +11,7 @@ class BoxJSEmulator(Emulator):
         JScript,
         JScriptEncode,
     ]
-    IMAGE_NAME = "psrok1/emu-strings-boxjs"
+    IMAGE_NAME = with_tag("psrok1/emu-strings-boxjs")
     DISABLED = not bool(os.getenv("ENABLE_BOXJS", ""))
 
     def _local_path(self, fname):

@@ -13,6 +13,13 @@ from ..sample import Sample
 LOCAL_EMULATION_PATH = "/app/results/emulation/"
 
 
+def with_tag(image_name):
+    tag = os.getenv("TAG", "latest")
+    if ":" in image_name:
+        return image_name
+    return "{}:{}".format(image_name, tag)
+
+
 class Emulator(object):
     """
     Docker-based generic emulator module

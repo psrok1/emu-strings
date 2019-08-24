@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   emu-app:
-    image: psrok1/emu-strings
+    image: "psrok1/emu-strings:${TAG:-latest}"
     build:
       context: ./src
       dockerfile: Dockerfile-app
@@ -17,18 +17,19 @@ services:
         source: results
         target: /app/results
   emu-daemon:
-    image: psrok1/emu-strings-daemon
+    image: "psrok1/emu-strings-daemon:${TAG:-latest}"
     build:
       context: ./src
       dockerfile: Dockerfile-daemon
       args:
-        concurrent: 4
+        concurrent: "${CONCURRENCY:-4}"
     links:
       - dind
       - mongo
       - redis
     environment:
       DOCKER_HOST: tcp://dind:2375
+      TAG: "${TAG:-latest}"
     volumes:
       - type: bind
         source: ./emulators/images
