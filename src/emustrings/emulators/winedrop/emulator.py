@@ -13,7 +13,7 @@ class WinedropEmulator(Emulator):
         language.VBScript,
         language.VBScriptEncode
     ]
-    IMAGE_NAME = "winedrop:latest"
+    IMAGE_NAME = "psrok1/winedrop"
 
     def _load_report(self):
         report_path = os.path.join(self.workdir, "report.json")
