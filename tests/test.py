@@ -34,13 +34,13 @@ def expect_url(aid):
         assert "hello.example" in status["results"]["urls"]
 
 
-aid = start_analysis("""
+aid = start_analysis(b"""
 WScript.echo("h"+"t"+"t"+"p"+":"+"/"+"/"+"h"+"e"+"l"+"l"+"o"+"."+"e"+"x"+"a"+"m"+"p"+"l"+"e")
 """, "sample.js", "JScript")
 
 expect_url(aid)
 
-aid = start_analysis("""
+aid = start_analysis(b"""
 WScript.echo "h" & "t" & "t" & "p" & ":" & "/" & "/" & "h" & "e" & "l" & "l" & "o" & "." & "e" & "x" & "a" & "m" & "p" & "l" & "e"
 """, "sample.vbs", "VBScript")
 
