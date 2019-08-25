@@ -21,8 +21,8 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile-daemon
-      args:
-        concurrent: 4
+    environment:
+      CONCURRENCY: "${CONCURRENCY:-4}"
     links:
       - dind
       - mongo

@@ -1,8 +1,5 @@
 FROM python:3.6-alpine
 
-ARG concurrent
-ENV concurrent=$concurrent
-
 COPY requirements.txt /app/requirements.txt
 RUN pip --no-cache-dir install -r /app/requirements.txt
 
@@ -17,4 +14,4 @@ COPY daemon.py /app/daemon.py
 COPY emustrings /app/emustrings
 
 WORKDIR /app/
-ENTRYPOINT celery worker -A daemon -l info -c$concurrent
+ENTRYPOINT ./worker.sh
