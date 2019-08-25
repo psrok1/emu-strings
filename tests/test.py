@@ -32,9 +32,12 @@ def expect_url(aid):
         if status["status"] in ["pending", "in-progress"]:
             time.sleep(1)
             continue
-        assert status["status"] == "success"
-        print("{}: {}".format(aid, json.dumps(status, indent=4)))
-        assert "hello.example" in status["results"]["urls"]
+        if status["status"] == "success":
+            print("{}: {}".format(aid, json.dumps(status, indent=4)))
+            assert "hello.example" in status["results"]["urls"]
+            break
+        else:
+            raise Exception("Analysis failed ({})".format(status["status"]))
     else:
         raise Exception("Analysis took too long")
 
