@@ -26,15 +26,17 @@ def get_analysis_status(aid):
 
 
 def expect_url(aid):
-    for _ in range(60):
+    for t in range(180):
         status = get_analysis_status(aid)
-        print("{}: {}".format(aid, status["status"]))
+        print("{}: ({}) {}".format(aid, t, status["status"]))
         if status["status"] in ["pending", "in-progress"]:
             time.sleep(1)
             continue
         assert status["status"] == "success"
         print("{}: {}".format(aid, json.dumps(status, indent=4)))
         assert "hello.example" in status["results"]["urls"]
+    else:
+        raise Exception("Analysis took too long")
 
 
 aid = start_analysis(b"""
