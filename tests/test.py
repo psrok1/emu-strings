@@ -15,6 +15,7 @@ def start_analysis(code, name, language):
         })
     })
     req.raise_for_status()
+    print("Started analysis {} ({})".format(req.json()["aid"], name))
     return req.json()["aid"]
 
 
@@ -27,10 +28,12 @@ def get_analysis_status(aid):
 def expect_url(aid):
     for _ in range(60):
         status = get_analysis_status(aid)
+        print("{}: {}".format(aid, status["status"]))
         if status["status"] in ["pending", "in-progress"]:
             time.sleep(1)
             continue
         assert status["status"] == "success"
+        print("{}: {}".format(aid, json.dumps(status, indent=4)))
         assert "hello.example" in status["results"]["urls"]
 
 
