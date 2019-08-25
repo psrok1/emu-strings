@@ -1,3 +1,4 @@
+language: python
 services:
   - docker
 jobs:
@@ -46,3 +47,6 @@ jobs:
         script: ./.travis/deploy.sh
         on:
           all_branches: true
+    - stage: test
+      name: 'Smoke test'
+      script: ./.travis/test.sh
