@@ -8,4 +8,4 @@ pip install -r tests/requirements.txt
 docker-compose pull && \
 docker-compose up -d && \
 sleep 5 && \
-python tests/test.py || docker-compose logs emu-app emu-daemon && false
+python tests/test.py || ( docker-compose logs emu-app emu-daemon; false )
