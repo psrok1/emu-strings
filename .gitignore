@@ -10,4 +10,5 @@ node_modules/
 venv/
 results/
 data/
-emulators/images/
+emulators/images/*
+!.empty
