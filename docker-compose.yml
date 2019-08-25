@@ -21,8 +21,6 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile-daemon
-    environment:
-      CONCURRENCY: "${CONCURRENCY:-4}"
     links:
       - dind
       - mongo
@@ -30,6 +28,7 @@ services:
     environment:
       DOCKER_HOST: tcp://dind:2375
       TAG: "${TAG:-latest}"
+      CONCURRENCY: "${CONCURRENCY:-4}"
     volumes:
       - type: bind
         source: ./emulators/images

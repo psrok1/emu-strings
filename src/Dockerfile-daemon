@@ -11,6 +11,7 @@ RUN addgroup -g 9999 emustrings && \
 USER emustrings
 
 COPY daemon.py /app/daemon.py
+COPY worker.sh /app/worker.sh
 COPY emustrings /app/emustrings
 
 WORKDIR /app/
