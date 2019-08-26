@@ -53,7 +53,7 @@ class Analysis(object):
         """
         Creates new analysis (with unique id) or gets instance of existing one
         """
-        self.sample = self.language = None
+        self.sample = None
         self.options = None
         self.status = None
 
@@ -183,7 +183,6 @@ class Analysis(object):
             "sample": self.sample.to_dict(),
             "status": self.status,
             "timestamp": self.timestamp,
-            "language": str(self.language),
             "results": self.storage.store(),
             "options": self.options
         }

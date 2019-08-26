@@ -14,9 +14,6 @@ logger = logging.getLogger(__name__)
 IMAGES_PATH = "/app/images"
 LOADED_EMULATORS: List[Type[Emulator]] = []
 
-from .winedrop import WinedropEmulator
-from .boxjs import BoxJSEmulator
-
 
 def _preload_images(docker_client: DockerClient):
     """
@@ -39,7 +36,20 @@ def load_emulators(docker_client: DockerClient):
     :param emulators: Available emulators
     :return: Emulators for which the image was loaded
     """
+    import importlib
+    import pkgutil
+
     global LOADED_EMULATORS
+
+    for loader, name, is_pkg in pkgutil.walk_packages([os.path.dirname(__file__)],
+                                                      '.'.join(__name__.split(".")[:-1]) + "."):
+        if not is_pkg:
+            continue
+        try:
+            importlib.import_module(name)
+            logger.info("Loaded subpackage %s", name)
+        except Exception:
+            logger.exception("Error during import %s", name)
 
     emulators = cast(List[Type[Emulator]], Emulator.__subclasses__())
 
@@ -63,8 +73,8 @@ def load_emulators(docker_client: DockerClient):
                 logger.info("%s not loaded - pulling from registry", emulator.IMAGE_NAME)
                 docker_client.images.pull(emulator.IMAGE_NAME)
                 logger.info("%s pulled successfully", emulator.IMAGE_NAME)
-            except docker.errors.ImageNotFound:
-                logger.warning("Can't load %s: image %s doesn't exist",
+            except docker.errors.NotFound:
+                logger.warning("Can't load %s: image %s not found in registry",
                                emulator.__name__,
                                emulator.IMAGE_NAME)
                 # Don't load emulator
@@ -72,6 +82,8 @@ def load_emulators(docker_client: DockerClient):
         # Emulator is ready
         LOADED_EMULATORS.append(emulator)
 
+    if not LOADED_EMULATORS:
+        raise RuntimeError("No emulators found.")
 
 def get_emulators(language: Language) -> Iterator[Type[Emulator]]:
     """
