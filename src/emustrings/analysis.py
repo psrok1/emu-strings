@@ -110,8 +110,7 @@ class Analysis(object):
         last_id_query = {"_id": {"$lt": ObjectId(last_id)}} if last_id else {}
         entries = list(Analysis.db_collection().find(
             last_id_query,
-            {"filename": 1, "sha256": 1, "aid": 1, "_id": 1, "timestamp": 1,
-             "status": 1, "language": 1, "options": 1}
+            {"sample": 1, "aid": 1, "_id": 1, "timestamp": 1, "status": 1, "options": 1}
         ).sort("_id", -1).limit(limit))
         for entry in entries:
             entry["_id"] = str(entry["_id"])

@@ -32,8 +32,8 @@ class Emulator(object):
     IMAGE_NAME = ""
     DISABLED = False
 
-    DEFAULT_SOFT_TIMEOUT = 60
-    DEFAULT_HARD_TIMEOUT = 90
+    DEFAULT_SOFT_TIMEOUT = 120
+    DEFAULT_HARD_TIMEOUT = 150
     EMULATION_PATH = "/opt/analysis"
 
     @property

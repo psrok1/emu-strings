@@ -28,7 +28,9 @@ class Sample(object):
 
     @property
     def extension(self):
-        return next(iter(self.name.rsplit(".")), "")
+        if "." not in self.name:
+            return ""
+        return self.name.rsplit(".", 1)[-1]
 
     def ensure_extension(self, extension):
         if self.extension.lower() != extension.lower():

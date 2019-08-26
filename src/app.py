@@ -27,6 +27,14 @@ def get_analysis(aid):
     return jsonify(entry.to_dict())
 
 
+@app.route("/api/analysis/sample/<aid>")
+def get_analysis_by_sample(aid):
+    entry = Analysis.get_analysis(aid)
+    if entry is None:
+        return "{}"
+    return jsonify(entry.to_dict())
+
+
 @app.route("/api/analysis/<aid>/<key>/<identifier>")
 def get_artifact(aid, key, identifier):
     entry = Analysis.get_analysis(aid)

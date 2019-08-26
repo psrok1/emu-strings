@@ -9,7 +9,7 @@ class UploadForm extends Component {
         language: "auto-detect",
         fileSelected: null,
         advancedCollapsed: false,
-        softTimeout: 60,
+        softTimeout: 120,
         killAfterNext: 30,
     }
   

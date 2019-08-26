@@ -88,13 +88,15 @@ export default class AnalysisList extends Component {
                                                 <Link to={`/analysis/${entry.aid}`}>
                                                     {entry.aid}
                                                 </Link>
+                                                <br/>
+                                                {entry.timestamp}
                                             </td>
                                             <td className="cell-ellipsis">
-                                                <b>File name:</b> {entry.filename}
+                                                <b>File name:</b> {entry.sample.name}
                                                 <br/>
-                                                <b>SHA256:</b> {entry.sha256}
+                                                <b>SHA256:</b> {entry.sample.sha256}
                                             </td>
-                                            <td>{entry.language}</td>
+                                            <td>{entry.sample.language}</td>
                                             <td><AnalysisStatus status={entry.status}/></td>
                                         </tr>
                                 )))
