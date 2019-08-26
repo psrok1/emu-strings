@@ -3,3 +3,4 @@ construct==2.5.2
 pdbparse==1.2
 requests
 pyyaml==5.1
+capstone==4.0.1

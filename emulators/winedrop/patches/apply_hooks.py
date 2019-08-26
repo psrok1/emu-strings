@@ -3,6 +3,7 @@ import struct
 
 from pefile import PE
 from yaml import load
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 from pdblib.dl_syms import download_pdb_by_pe
 from pdblib.read_syms import read_symbols
@@ -68,7 +69,9 @@ class WSHInstrumentation(object):
         rva_ft = self.next_rva()
         rva_iat = []
         for r in rva_routine_str:
-            rva_iat.append(self.append(p32(r)))
+            iat_va = self.append(p32(r))
+            print("IAT winedrop.dll@{} => {}+0x{:x}".format(r, self.libpath, iat_va))
+            rva_iat.append(iat_va)
         self.append(p32(0))
         # 0x10 alignment
         self.align(16)
@@ -97,12 +100,12 @@ class WSHInstrumentation(object):
         self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].VirtualAddress = rva_imports
         self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].Size += 20
         # Fix SizeOfImage
-        sizeOfImage = self.last_section.VirtualAddress + self.last_section.SizeOfRawData
-        self.pe.OPTIONAL_HEADER.SizeOfImage = sizeOfImage + (4096 - sizeOfImage % 4096)
+        size_of_image = self.last_section.VirtualAddress + self.last_section.SizeOfRawData
+        self.pe.OPTIONAL_HEADER.SizeOfImage = size_of_image + (4096 - size_of_image % 4096)
         # Return IAT entries for each imported routine
-        return rva_iat
-    
-    def add_trampolines(self, iat):
+        return {routines[idx]: r_iat for idx, r_iat in enumerate(rva_iat)}
+
+    def hook_hotpatchable_prologue(self, patch_va, hook_iat_va):
         """
         Assume that we're hooking function with signature "int __stdcall fn(a,b,c)".
         After CALL to trampoline, stack looks like:
@@ -119,33 +122,66 @@ class WSHInstrumentation(object):
             c
         So now we're effectively calling "int __stdcall hook_fn(orig_ptr, a, b, c)" with callee_ptr as return address.
         """
-        tramp_code = ''.join([
-            "\x58",                  # pop eax
-            "\x83\xc0\x02",          # add eax, 2
-            "\x87\x04\x24",          # xchg [esp], eax
-            "\x50",                  # push eax
-            "\xe8\x00\x00\x00\x00",  # call $+5
-            "\x58",                  # pop eax
-            "\xff\xa0"               # jmp [eax+...]
-        ])
-        tramp_edx = len(tramp_code)-3
-        tramp_rva = []
-        for va in iat:
-            tramp_rva.append(self.append(tramp_code+p32((va-(self.next_rva()+tramp_edx)))))
-            self.align(16, '\xcc')
-        self.align(0x200)
-        return tramp_rva
-
-    def hook_patch(self, patch_va, tramp_va):
+        tramp_code = [
+            "\x58"  # pop eax
+            "\x83\xc0\x02"  # add eax, 2
+            "\x87\x04\x24"  # xchg [esp], eax
+            "\x50"  # push eax
+            "\xe8\x00\x00\x00\x00"  # call $+5
+            ,
+            "\x58"  # pop eax
+            "\xff\xa0"  # jmp [eax+<rip_rel_iat>]
+        ]
         patch_offs = self.pe.get_offset_from_rva(patch_va)
         # Is it "hookable" function prologue?
         assert self.pe.__data__[patch_offs-5:patch_offs+2] == "\x90\x90\x90\x90\x90\x8B\xFF"
+        rip_rel_iat = hook_iat_va - (self.next_rva() + len(tramp_code[0]))
+        tramp_va = self.append(tramp_code[0] + tramp_code[1] + p32(rip_rel_iat))
+        self.align(16, '\xcc')
         # Apply hook patch (jmp backwards, call to tramp_va)
-        data = bytearray(self.pe.__data__)
-        data[patch_offs-5:patch_offs+2] = "\xe8{}\xeb\xf9".format(p32(tramp_va - patch_va))
-        self.pe.__data__ = str(data)
+        self.pe.set_bytes_at_offset(patch_offs - 5, "\xe8{}\xeb\xf9".format(p32(tramp_va - patch_va)))
+        return tramp_va
+
+    def hook_inline(self, patch_va, hook_iat_va, expected=None):
+        """
+        Hooking middle of function
+        """
+        tramp_code = [
+            "\x9c" # pushf
+            "\x60" # pusha
+            "\xe8\x00\x00\x00\x00"  # call $+5
+            "\x58" # pop eax
+            "\xff\x90" # call [eax+<rip_rel_iat>]
+            ,
+            "\x61" # popa
+            "\x9d" # popf
+            ,
+            "\xc3" # ret
+        ]
+        patch_offs = self.pe.get_offset_from_rva(patch_va)
+        # Is it "hookable" function prologue?
+        if expected is not None:
+            assert self.pe.__data__[patch_offs:patch_offs + len(expected)] == expected
+
+        rip_rel_iat = hook_iat_va - (self.next_rva() + len(tramp_code[0]))
+        tramp_va = self.append(tramp_code[0] + p32(rip_rel_iat))
+        self.append(tramp_code[1])
+
+        patched_code_size = 0
+        for _, instr_size, _, _ in Cs(CS_ARCH_X86, CS_MODE_32).disasm(self.pe.__data__[patch_offs:patch_offs + 16], 16):
+            patched_code_size += instr_size
+            if patched_code_size >= 5:
+                break
+
+        patched_code = self.pe.__data__[patch_offs:patch_offs + patched_code_size]
+        self.pe.set_bytes_at_offset(patch_offs, ("\xe8" + p32(tramp_va - patch_va)).ljust(patched_code_size, '\x90'))
+        self.append(patched_code)
+        self.append(tramp_code[2])
+        self.align(16, '\xcc')
+        return tramp_va
 
     def write(self, fname):
+        self.align(0x200)
         self.pe.write(fname)
 
 if __name__ == "__main__":
@@ -155,11 +191,33 @@ if __name__ == "__main__":
         if not os.path.isfile(pdbpath):
             download_pdb_by_pe(os.path.join(os.getenv("WINESYSTEM32", './'), libname))
         syms = {sym[0]: sym[1] for sym in read_symbols(pdbpath)}
+
         libwsh = WSHInstrumentation(libpath)
-        monroutines = list(set(libroutines.values()))
-        monrva = libwsh.rebuild_imports(monroutines)
-        monrva = {monroutines[idx]: rva for idx, rva in enumerate(libwsh.add_trampolines(monrva))}
-        for routine, hook in libroutines.iteritems():
-            libwsh.hook_patch(syms[routine], monrva[hook])
+
+        monroutines = list(set(
+            hookdef if isinstance(hookdef, str) else hookdef["hook"]
+            for routine, hookdef in libroutines.iteritems()))
+        iatroutines = libwsh.rebuild_imports(monroutines)
+
+        for routine, hookdef in libroutines.iteritems():
+            if isinstance(hookdef, str):
+                print("{} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
+                    routine,
+                    syms[routine],
+                    hookdef,
+                    libwsh.hook_hotpatchable_prologue(syms[routine], iatroutines[hookdef]),
+                    libname=libname
+                ))
+            else:
+                hook_routine = hookdef["hook"]
+                hook_offset = int(hookdef["offset"], 0)
+                hook_expected = hookdef.get("expected")
+                print("{} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
+                    routine,
+                    syms[routine],
+                    hook_routine,
+                    libwsh.hook_inline(syms[routine], iatroutines[hook_routine] + hook_offset, expected=hook_expected),
+                    libname=libname
+                ))
         libwsh.write(libpath)
         print "[+] Applied patches on {}".format(libpath)
