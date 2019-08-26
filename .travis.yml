@@ -66,10 +66,6 @@ jobs:
       name: 'Push images as latest'
       if: branch = master
       script:
-        - docker tag "psrok1/winedrop" "psrok1/winedrop:latest"
-        - docker tag "psrok1/emu-strings-boxjs" "psrok1/emu-strings-boxjs:latest"
-        - docker tag "psrok1/emu-strings" "psrok1/emu-strings:latest"
-        - docker tag "psrok1/emu-strings-daemon" "psrok1/emu-strings-daemon:latest"
         - docker push "psrok1/winedrop:latest"
         - docker push "psrok1/emu-strings-boxjs:latest"
         - docker push "psrok1/emu-strings:latest"

@@ -85,6 +85,7 @@ def load_emulators(docker_client: DockerClient):
     if not LOADED_EMULATORS:
         raise RuntimeError("No emulators found.")
 
+
 def get_emulators(language: Language) -> Iterator[Type[Emulator]]:
     """
     Get emulators for specified language
