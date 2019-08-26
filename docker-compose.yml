@@ -29,6 +29,7 @@ services:
       DOCKER_HOST: tcp://dind:2375
       TAG: "${TAG:-latest}"
       CONCURRENCY: "${CONCURRENCY:-4}"
+      ENABLE_BOXJS: "${ENABLE_BOXJS:-}"
     volumes:
       - type: bind
         source: ./emulators/images

@@ -85,14 +85,16 @@ If results are not satisfying and sample execution reached its timeout, expand `
 
 Emu-strings includes optional integration with [great tool Box-js made by CapacitorSet](https://github.com/CapacitorSet/box-js). It can be used as a secondary engine for JScript samples. Tool is running both Winedrop and Box-js engines at the same time during analysis, combining the results.
 
-Integration was made mainly for comparison purposes, so it wasn't well-tested. If you still want to include Box-js analyses, just build Docker image using commands presented below:
+Integration was made mainly for comparison purposes, so it wasn't well-tested. If you still want to include Box-js analyses, just rerun docker-compose with `ENABLE_BOXJS=1` flag:
 
 ```bash
+$ ENABLE_BOXJS=1 docker-compose up
 
-cd emulators
-( cd boxjs; docker build . -t emus-box-js )
-docker save emus-box-js -o images/emus-box-js.tar && chmod 644 emus-box-js.tar
-
+...
+emu-daemon_1_374b118a08a8 | INFO:emustrings.emulators.loader:Loaded subpackage emustrings.emulators.boxjs
+emu-daemon_1_374b118a08a8 | INFO:emustrings.emulators.loader:Loaded subpackage emustrings.emulators.winedrop
+emu-daemon_1_374b118a08a8 | INFO:emustrings.emulators.loader:psrok1/emu-strings-boxjs:latest not loaded - pulling from registry
+emu-daemon_1_374b118a08a8 | INFO:emustrings.emulators.loader:psrok1/emu-strings-boxjs:latest pulled successfully
 ``` 
 
 ## Disclaimer
