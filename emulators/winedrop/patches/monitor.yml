@@ -8,6 +8,11 @@ jscript.dll:
   "?Clear@VAR@@QAEXXZ": hook_VarClear
   "?SetConstBstr@VAR@@QAEXPAGPAVExecBody@@@Z": hook_VarSetConstBstr
   "?FInterrupt@CSession@@QAEHXZ": hook_SessionFInterrupt_JScript
+  "?Run@CScriptRuntime@@QAEJPAVVAR@@@Z":
+    hook: hook_CScriptRuntimeRun_BOS_JScript
+    offset: -0x2037
+    expected: "89435489734c"
+
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant

@@ -150,6 +150,7 @@ class WSHInstrumentation(object):
             "\x9c" # pushf
             "\x60" # pusha
             "\xe8\x00\x00\x00\x00"  # call $+5
+            ,
             "\x58" # pop eax
             "\xff\x90" # call [eax+<rip_rel_iat>]
             ,
@@ -161,14 +162,19 @@ class WSHInstrumentation(object):
         patch_offs = self.pe.get_offset_from_rva(patch_va)
         # Is it "hookable" function prologue?
         if expected is not None:
-            assert self.pe.__data__[patch_offs:patch_offs + len(expected)] == expected
+            expected = expected.decode("hex")
+            if self.pe.__data__[patch_offs:patch_offs + len(expected)] != expected:
+                raise AssertionError("Expected {}, found {}".format(
+                    expected,
+                    self.pe.__data__[patch_offs:patch_offs + len(expected)].encode("hex")))
 
         rip_rel_iat = hook_iat_va - (self.next_rva() + len(tramp_code[0]))
-        tramp_va = self.append(tramp_code[0] + p32(rip_rel_iat))
-        self.append(tramp_code[1])
+        tramp_va = self.append(tramp_code[0] + tramp_code[1] + p32(rip_rel_iat))
+        self.append(tramp_code[2])
 
         patched_code_size = 0
-        for _, instr_size, _, _ in Cs(CS_ARCH_X86, CS_MODE_32).disasm(self.pe.__data__[patch_offs:patch_offs + 16], 16):
+        for _, instr_size, _, _ in Cs(CS_ARCH_X86, CS_MODE_32).disasm_lite(
+                self.pe.__data__[patch_offs:patch_offs + 16], 16):
             patched_code_size += instr_size
             if patched_code_size >= 5:
                 break
@@ -176,7 +182,7 @@ class WSHInstrumentation(object):
         patched_code = self.pe.__data__[patch_offs:patch_offs + patched_code_size]
         self.pe.set_bytes_at_offset(patch_offs, ("\xe8" + p32(tramp_va - patch_va)).ljust(patched_code_size, '\x90'))
         self.append(patched_code)
-        self.append(tramp_code[2])
+        self.append(tramp_code[3])
         self.align(16, '\xcc')
         return tramp_va
 
@@ -210,13 +216,14 @@ if __name__ == "__main__":
                 ))
             else:
                 hook_routine = hookdef["hook"]
-                hook_offset = int(hookdef["offset"], 0)
+                hook_offset = hookdef["offset"]
                 hook_expected = hookdef.get("expected")
-                print("{} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
+                print("{}+{:x} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
                     routine,
-                    syms[routine],
+                    hook_offset,
+                    syms[routine] + hook_offset,
                     hook_routine,
-                    libwsh.hook_inline(syms[routine], iatroutines[hook_routine] + hook_offset, expected=hook_expected),
+                    libwsh.hook_inline(syms[routine] + hook_offset, iatroutines[hook_routine], expected=hook_expected),
                     libname=libname
                 ))
         libwsh.write(libpath)

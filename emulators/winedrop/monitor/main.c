@@ -120,6 +120,18 @@ int __thiscall hook_SessionFInterrupt_VBScript(void* session, fn_SessionFInterru
     }
     return original(session);
 }
+
+int __cdecl hook_CScriptRuntimeRun_BOS_JScript(unsigned int edi,
+                                               unsigned int esi,
+                                               unsigned int ebp,
+                                               unsigned int esp,
+                                               unsigned int ebx,
+                                               unsigned int edx,
+                                               unsigned int ecx,
+                                               unsigned int eax)
+{
+    log_send('n', "BOS (%d, %d)", eax, esi);
+}
 /*** 
  * JSCRIPT.DLL 
  * VBSCRIPT.DLL
