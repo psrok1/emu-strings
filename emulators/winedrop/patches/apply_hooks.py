@@ -180,7 +180,7 @@ class WSHInstrumentation(object):
                 break
 
         patched_code = self.pe.__data__[patch_offs:patch_offs + patched_code_size]
-        self.pe.set_bytes_at_offset(patch_offs, ("\xe8" + p32(tramp_va - patch_va)).ljust(patched_code_size, '\x90'))
+        self.pe.set_bytes_at_offset(patch_offs, ("\xe8" + p32(tramp_va - patch_va - 5)).ljust(patched_code_size, '\x90'))
         self.append(patched_code)
         self.append(tramp_code[3])
         self.align(16, '\xcc')
