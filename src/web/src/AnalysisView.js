@@ -66,7 +66,7 @@ class AnalysisView extends Component {
                             </tr>
                             <tr>
                                 <th>Language:</th>
-                                <td>{this.state.analysis.language}</td>
+                                <td>{this.state.analysis.sample.language}</td>
                             </tr>
                             <tr>
                                 <th>Analysis status:</th>
