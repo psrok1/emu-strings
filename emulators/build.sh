@@ -12,7 +12,7 @@ fi
 
 (
     cd winedrop &&
-    docker build . -t winedrop
+    docker build . -t psrok1/winedrop
 ) || exit 1
 
 # Exporting to ./images

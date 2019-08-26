@@ -22,31 +22,50 @@ Actual requirements are depending on the number of parallel Winedrop instances a
 
 ## Installation
 
+The first step is to clone repository
+
+```bash
+$ git clone https://github.com/psrok1/emu-strings.git
+```
+
+Then pull latest emu-strings images:
+```bash
+$ docker-compose pull
+```
+
+Finally you can configure and run the emu-strings engine. Start with customizing `docker-compose.yml` depending on your needs. See a few tips below:
+
+* Web interface is exposed at `64205` port. If you want to change that, modify `emu-app` service settings. 
+* Limit of concurrent analyzer instances is set to 4. If you want to run more - set `emu-daemon.build.args.concurrent` value.
+* If you are running in low-memory environment, consider turning off tmpfs mount of `/var/lib/docker` in DinD container. This will drastically drop analysis performance, but will make you save few gigabytes of memory.
+
+After customizing `docker-compose.yml` just run application.
+
+```bash
+$ docker-compose up
+```
+
+Web interface in default configuration can be found at `http://127.0.0.1:64205`
+
+## Installation from source code
+
 The first step is to clone repository including submodules:
 
 ```bash
 $ git clone --recurse-submodules https://github.com/psrok1/emu-strings.git
 ```
 
-Then build an Winedrop image. This may take a while because all components will be build from scratch (including Wine).
+Then build an Winedrop image. This may take a while because all components will be built from scratch (including Wine).
 
 ```bash
 $ cd emulators ; ./build.sh 
 ```
 
-Finally you can configure and build the emu-strings engine. Start with customizing `docker-compose.yml` depending on your needs. See a few tips below:
-
-* Web interface is exposed at `64205` port. If you want to change that, modify `emu-app` service settings. 
-* Limit of concurrent analyzer instances is set to 4. If you want to run more - set `emu-daemon.build.args.concurrent` value.
-* If you are running in low-memory environment, consider turning off tmpfs mount of `/var/lib/docker` in DinD container. This will drastically drop analysis performance, but will make you save few gigabytes of memory.
-
-After customizing `docker-compose.yml` just build application and run.
+Finally just build application and run.
 
 ```bash
 $ docker-compose up --build
 ```
-
-Web interface in default configuration can be found at `http://127.0.0.1:64205`
 
 ## Usage
 
