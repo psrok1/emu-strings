@@ -65,8 +65,4 @@ jobs:
     - stage: publish
       name: 'Push images as latest'
       if: branch = master
-      script:
-        - docker push "psrok1/winedrop:latest"
-        - docker push "psrok1/emu-strings-boxjs:latest"
-        - docker push "psrok1/emu-strings:latest"
-        - docker push "psrok1/emu-strings-daemon:latest"
+      script: ./.travis/publish.sh
