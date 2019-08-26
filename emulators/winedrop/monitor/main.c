@@ -132,6 +132,29 @@ int __cdecl hook_CScriptRuntimeRun_BOS_JScript(unsigned int edi,
 {
     log_send('n', "BOS (%d, %d)", eax, esi);
 }
+
+int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
+                                        unsigned int opcode,
+                                        unsigned int ebp,
+                                        unsigned int esp,
+                                        unsigned int ebx,
+                                        unsigned int edx,
+                                        unsigned int ecx,
+                                        unsigned int eax)
+{
+    unsigned int opOffset, codeStart, codeEnd;
+    unsigned int *parseNode;
+    if(opcode == 0x4F) // a+b
+    {
+        opOffset = *(unsigned int*)(parserPtr + 0xB4);
+        parseNode = *(unsigned int*)(ebp+16);
+        if(*parseNode > 0x80)
+            parseNode = *(unsigned int*)(ebp+12);
+        codeStart = parseNode[2];
+        codeEnd = parseNode[3];
+        log_send('n', "Concat found (op %d) - chars %d..%d", opOffset, codeStart, codeEnd);
+    }
+}
 /*** 
  * JSCRIPT.DLL 
  * VBSCRIPT.DLL

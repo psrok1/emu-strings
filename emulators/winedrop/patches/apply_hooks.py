@@ -165,7 +165,7 @@ class WSHInstrumentation(object):
             expected = expected.decode("hex")
             if self.pe.__data__[patch_offs:patch_offs + len(expected)] != expected:
                 raise AssertionError("Expected {}, found {}".format(
-                    expected,
+                    expected.encode("hex"),
                     self.pe.__data__[patch_offs:patch_offs + len(expected)].encode("hex")))
 
         rip_rel_iat = hook_iat_va - (self.next_rva() + len(tramp_code[0]))

@@ -12,6 +12,10 @@ jscript.dll:
     hook: hook_CScriptRuntimeRun_BOS_JScript
     offset: -0x2037
     expected: "89435489734c"
+  "?GenPcode@Parser@@AAEXW4pcodes@@@Z":
+    hook: hook_ParserGenPCode_JScript
+    offset: 0x12
+    expected: "0fbe86e8"
 
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
