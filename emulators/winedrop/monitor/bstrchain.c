@@ -111,8 +111,11 @@ void TBStr_clear(wchar_t* bstr)
     if (s == NULL || (s->flags & TRACKED_ENABLED))
     {
         log_send('s', "%ls", bstr);
-        LL_FOREACH(s->positions, elt) {
-            log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
+        if(s != NULL)
+        {
+            LL_FOREACH(s->positions, elt) {
+                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
+            }
         }
     }
     

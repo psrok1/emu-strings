@@ -132,10 +132,10 @@ int __cdecl hook_CScriptRuntimeRun_OP_ADD_JScript(unsigned int edi,
                                                   unsigned int ecx,
                                                   unsigned int eax)
 {
-    void* scrFncObj = *(unsigned int**)(ebx + 24);
+    void* scriptBody = **(unsigned int***)(ebx + 28);
     unsigned int pc = *(unsigned int*)(ebx + 0x4C);
     unsigned int ep = *(unsigned int*)(ebx + 0x50);
-    CodeTracked_executeStart(scrFncObj);
+    CodeTracked_executeStart(scriptBody);
     CodeTracked_executeOp(pc - ep);
 }
 
@@ -148,9 +148,8 @@ int __cdecl hook_CScriptRuntimeRun_JScript(unsigned int edi,
                                            unsigned int ecx,
                                            unsigned int eax)
 {
-    void* scrFncObj = *(unsigned int**)(ebx + 24);
-    unsigned int fnId = CodeTracked_executeStart(scrFncObj);
-    log_send('n', "EXECUTING CODE %d %p", fnId, scrFncObj);
+    void* scriptBody = **(unsigned int***)(ebx + 28);
+    unsigned int fnId = CodeTracked_executeStart(scriptBody);
 }
 
 
@@ -231,17 +230,8 @@ int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
         }
         codeStart = parseNode[2];
         codeEnd = parseNode[3];
-        CodeTracked_parseAddOp(opOffset, codeStart, codeEnd);
+        CodeTracked_compileAddOp(opOffset, codeStart, codeEnd);
     }
-}
-
-typedef int __thiscall (*fn_ScrFncObj)(void* this, void* a2, void* a3, void* a4);
-
-
-int __thiscall hook_ScrFncObj_JScript(void* this, fn_ScrFncObj original, void* a2, void* a3, void* a4)
-{
-    unsigned int fnId = CodeTracked_parseFinish(this);
-    return original(this, a2, a3, a4);
 }
 
 typedef int __thiscall (*fn_jscript_Parser_ParseSource)(void* this, void* execBody, void* oleScript, wchar_t* a3,
@@ -258,9 +248,32 @@ int __thiscall hook_jscript_ParseSource(void* this, fn_jscript_Parser_ParseSourc
                                void *a8, 
                                void *a9)
 {
-    log_send('n', "PARSE START %d", CodeTracked_parseStart());
     log_send('c', "%ls", code);
     return original(this, execBody, oleScript, code, a4, a5, a6, a7, a8, a9);
+}
+
+typedef int __thiscall (*fn_jscript_COleScript_Compile)(
+    void* this,
+    void** scriptBody,
+    void* a2,
+    void* a3,
+    void* a4,
+    void* a5,
+    void* a6,
+    void* a7
+);
+
+int __thiscall hook_jscript_COleScript_Compile(void* this, fn_jscript_COleScript_Compile original,
+                                               void** scriptBody,
+                                               void* a2, void* a3, void* a4, void* a5, void* a6, void* a7)
+{
+    log_send('n', "Compiling %d...", CodeTracked_compileStart());
+    int result = original(this, scriptBody, a2, a3, a4, a5, a6, a7);
+    log_send('n', "Compiled %d (%p) with error code %d",
+        CodeTracked_compileFinish(*scriptBody),
+        *scriptBody,
+        result);
+    return result;
 }
 
 /*** 

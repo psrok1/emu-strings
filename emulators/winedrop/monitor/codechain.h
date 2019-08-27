@@ -12,7 +12,7 @@ typedef struct sOpTracked {
 } OpTracked, *POpTracked;
 
 typedef struct sCodeTracked {
-    void* codeScrFncObj;
+    void* codeCScriptBody;
     unsigned int codeSeqId;
     unsigned int containedIn;
     POpTracked opTracked;
@@ -27,10 +27,10 @@ typedef struct sCodePosTracked {
 } CodePosTracked, *PCodePosTracked;
 
 
-extern unsigned int CodeTracked_parseStart();
-extern void CodeTracked_parseAddOp(unsigned int opPos, unsigned int exprStart, unsigned int exprEnd);
-extern unsigned int CodeTracked_parseFinish(void* ptrScrFncObj);
-extern unsigned int CodeTracked_executeStart(void* ptrScrFncObj);
+extern unsigned int CodeTracked_compileStart();
+extern void CodeTracked_compileAddOp(unsigned int opPos, unsigned int exprStart, unsigned int exprEnd);
+extern unsigned int CodeTracked_compileFinish(void* ptrCScriptBody);
+extern unsigned int CodeTracked_executeStart(void* ptrCScriptBody);
 extern void CodeTracked_executeOp(unsigned int opPos);
 extern CodePosTracked* CodeTracked_getCodePosForConst(unsigned int exprStart, unsigned int exprEnd);
 extern CodePosTracked* CodeTracked_getCodePosByLastOp();

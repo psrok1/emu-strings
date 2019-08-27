@@ -19,7 +19,7 @@ jscript.dll:
     hook: hook_ParserGenPCode_JScript
     offset: 0x12
     expected: "0fbe86e8"
-  "??0ScrFncObj@@IAE@PAVCSession@@PAVFncInfo@@PAVVAR@@@Z": hook_ScrFncObj_JScript
+  "?Compile@COleScript@@QAEJPAPAVCScriptBody@@PBGKPAXJ1PAVCompileScriptException@@@Z": hook_jscript_COleScript_Compile
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant
