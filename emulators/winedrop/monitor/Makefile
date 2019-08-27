@@ -4,6 +4,7 @@ OBJ =\
 	bstr.o \
 	bstrchain.o \
 	bstrreport.o \
+	codechain.o \
 	main.o \
 	bench.o
 

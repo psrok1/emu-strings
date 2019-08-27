@@ -200,31 +200,37 @@ if __name__ == "__main__":
 
         libwsh = WSHInstrumentation(libpath)
 
-        monroutines = list(set(
-            hookdef if isinstance(hookdef, str) else hookdef["hook"]
-            for routine, hookdef in libroutines.iteritems()))
+        monroutines = []
+        for routine, hookdefs in libroutines.iteritems():
+            if not isinstance(hookdefs, list):
+                hookdefs = [hookdefs]
+            for hookdef in hookdefs:
+                monroutines.append(hookdef if isinstance(hookdef, str) else hookdef["hook"])
         iatroutines = libwsh.rebuild_imports(monroutines)
 
-        for routine, hookdef in libroutines.iteritems():
-            if isinstance(hookdef, str):
-                print("{} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
-                    routine,
-                    syms[routine],
-                    hookdef,
-                    libwsh.hook_hotpatchable_prologue(syms[routine], iatroutines[hookdef]),
-                    libname=libname
-                ))
-            else:
-                hook_routine = hookdef["hook"]
-                hook_offset = hookdef["offset"]
-                hook_expected = hookdef.get("expected")
-                print("{}+{:x} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
-                    routine,
-                    hook_offset,
-                    syms[routine] + hook_offset,
-                    hook_routine,
-                    libwsh.hook_inline(syms[routine] + hook_offset, iatroutines[hook_routine], expected=hook_expected),
-                    libname=libname
-                ))
+        for routine, hookdefs in libroutines.iteritems():
+            if not isinstance(hookdefs, list):
+                hookdefs = [hookdefs]
+            for hookdef in hookdefs:
+                if isinstance(hookdef, str):
+                    print("{} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
+                        routine,
+                        syms[routine],
+                        hookdef,
+                        libwsh.hook_hotpatchable_prologue(syms[routine], iatroutines[hookdef]),
+                        libname=libname
+                    ))
+                else:
+                    hook_routine = hookdef["hook"]
+                    hook_offset = hookdef["offset"]
+                    hook_expected = hookdef.get("expected")
+                    print("{}+{:x} ({libname}+0x{:x}) => winedrop.dll@{} ({libname}+0x{:x})".format(
+                        routine,
+                        hook_offset,
+                        syms[routine] + hook_offset,
+                        hook_routine,
+                        libwsh.hook_inline(syms[routine] + hook_offset, iatroutines[hook_routine], expected=hook_expected),
+                        libname=libname
+                    ))
         libwsh.write(libpath)
         print "[+] Applied patches on {}".format(libpath)

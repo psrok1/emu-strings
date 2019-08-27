@@ -72,6 +72,7 @@ class WineLauncher(object):
         self.hard_timeout = os.getenv("HARD_TIMEOUT", 60.0)
         self.sample = os.getenv("SAMPLE")
         self.engine = os.getenv("LANGUAGE")
+        self.prev_string = None
 
     def get_user(self):
         userpath = "/opt/.username"
@@ -80,11 +81,15 @@ class WineLauncher(object):
 
     def handle_log(self, channel, msg):
         if channel == "snippet":
-            self.report.report_snippet(msg)
+            self.prev_string = self.report.report_string(msg, code=True)
         elif channel == "notice":
             log.info(msg)
         elif channel == "string":
-            self.report.report_string(msg)
+            self.prev_string = self.report.report_string(msg)
+        elif channel == "extra":
+            self.report.report_extra(self.prev_string, msg)
+        else:
+            log.warning("Unknown channel")
 
     def handle_execution(self, proc):
         def reader(pipe, queue):
@@ -132,6 +137,8 @@ class WineLauncher(object):
                             self.handle_log("string", payload)
                         elif type == "c":
                             self.handle_log("snippet", payload)
+                        elif type == "e":
+                            self.handle_log("extra", payload)
                         elif type == "n":
                             self.handle_log("notice", payload)
                 elif source == proc.stderr:

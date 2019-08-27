@@ -5,6 +5,7 @@
 #include "log.h"
 #include "bstr.h"
 #include "bstrchain.h"
+#include "codechain.h"
 #include "bench.h"
 
 #ifndef __stdcall
@@ -37,7 +38,8 @@ typedef int __stdcall (*fn_ConcatStrs)(PVARStr dest, PVARStr s1, PVARStr s2);
 int __stdcall hook_ConcatStrs(fn_ConcatStrs original, PVARStr dest, PVARStr s1, PVARStr s2)
 {
     int retval = original(dest, s1, s2);
-    TBStr_add_from_var(dest->val.var->val.str);
+    CodePosTracked* pos = CodeTracked_getCodePosByLastOp();
+    TBStr_add_from_var(dest->val.var->val.str, pos);
     TBStr_disable(s1->val.str);
     TBStr_disable(s2->val.str);
     return retval;
@@ -53,7 +55,7 @@ typedef PVARStr __stdcall (*fn_rtConcatBStr)(wchar_t *s1, wchar_t* s2);
 PVARStr __stdcall hook_rtConcatBStr(fn_rtConcatBStr original, wchar_t* s1, wchar_t* s2)
 {
     PVARStr retval = original(s1, s2);
-    TBStr_add_from_var(retval->val.str);
+    TBStr_add_from_var(retval->val.str, NULL);
     TBStr_disable(s1);
     TBStr_disable(s2);
     return retval;
@@ -79,7 +81,7 @@ typedef void __thiscall (*fn_VarSetConstBstr)(PVARStr var, wchar_t *str, void *d
 void __thiscall hook_VarSetConstBstr(PVARStr var, fn_VarSetConstBstr original, wchar_t *str, void *dummy)
 {
     original(var, str, dummy);
-    TBStr_add_from_const(str);
+    TBStr_add_from_const(str, NULL);
 }
 
 // ?FInterrupt@CSession@@QAEHXZ
@@ -121,40 +123,37 @@ int __thiscall hook_SessionFInterrupt_VBScript(void* session, fn_SessionFInterru
     return original(session);
 }
 
-int __cdecl hook_CScriptRuntimeRun_BOS_JScript(unsigned int edi,
-                                               unsigned int esi,
-                                               unsigned int ebp,
-                                               unsigned int esp,
-                                               unsigned int ebx,
-                                               unsigned int edx,
-                                               unsigned int ecx,
-                                               unsigned int eax)
+int __cdecl hook_CScriptRuntimeRun_OP_ADD_JScript(unsigned int edi,
+                                                  unsigned int esi,
+                                                  unsigned int ebp,
+                                                  unsigned int esp,
+                                                  unsigned int ebx,
+                                                  unsigned int edx,
+                                                  unsigned int ecx,
+                                                  unsigned int eax)
 {
-    log_send('n', "BOS (%d, %d)", eax, esi);
+    void* scrFncObj = *(unsigned int**)(ebx + 24);
+    unsigned int pc = *(unsigned int*)(ebx + 0x4C);
+    unsigned int ep = *(unsigned int*)(ebx + 0x50);
+    CodeTracked_executeStart(scrFncObj);
+    CodeTracked_executeOp(pc - ep);
 }
 
-int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
-                                        unsigned int opcode,
-                                        unsigned int ebp,
-                                        unsigned int esp,
-                                        unsigned int ebx,
-                                        unsigned int edx,
-                                        unsigned int ecx,
-                                        unsigned int eax)
+int __cdecl hook_CScriptRuntimeRun_JScript(unsigned int edi,
+                                           unsigned int esi,
+                                           unsigned int ebp,
+                                           unsigned int esp,
+                                           unsigned int ebx,
+                                           unsigned int edx,
+                                           unsigned int ecx,
+                                           unsigned int eax)
 {
-    unsigned int opOffset, codeStart, codeEnd;
-    unsigned int *parseNode;
-    if(opcode == 0x4F) // a+b
-    {
-        opOffset = *(unsigned int*)(parserPtr + 0xB4);
-        parseNode = *(unsigned int*)(ebp+16);
-        if(*parseNode > 0x80)
-            parseNode = *(unsigned int*)(ebp+12);
-        codeStart = parseNode[2];
-        codeEnd = parseNode[3];
-        log_send('n', "Concat found (op %d) - chars %d..%d", opOffset, codeStart, codeEnd);
-    }
+    void* scrFncObj = *(unsigned int**)(ebx + 24);
+    unsigned int fnId = CodeTracked_executeStart(scrFncObj);
+    log_send('n', "EXECUTING CODE %d %p", fnId, scrFncObj);
 }
+
+
 /*** 
  * JSCRIPT.DLL 
  * VBSCRIPT.DLL
@@ -171,7 +170,10 @@ int __thiscall hook_ScanStringConstant(PScanner this,
     if(len > 3)
     {
         wchar_t* token = BStr_new(this->token_start+1, len);
-        TBStr_scanned_const(token);
+        TBStr_scanned_const(token, CodeTracked_getCodePosForConst(
+            this->token_start - this->code,
+            this->token_end - this->code
+        ));
     }
     return retval;
 }
@@ -206,6 +208,42 @@ int __stdcall hook_IgnoreSleep(fn_CHostObj_Sleep original, void* this, unsigned 
  * JSCRIPT.DLL
  ***/
 
+int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
+                                        unsigned int opcode,
+                                        unsigned int ebp,
+                                        unsigned int esp,
+                                        unsigned int ebx,
+                                        unsigned int edx,
+                                        unsigned int ecx,
+                                        unsigned int eax)
+{
+    unsigned int opOffset, codeStart, codeEnd;
+    unsigned int *parseNode;
+    if(opcode == 0x4F) // a+b
+    {
+        opOffset = *(unsigned int*)(parserPtr + 0xB4);
+        parseNode = *(unsigned int**)(ebp+16);
+        if(*parseNode > 0x80)
+        {
+            parseNode = *(unsigned int**)(ebp+12);
+            if(parseNode == 0xFFFFFFFE)
+                return;
+        }
+        codeStart = parseNode[2];
+        codeEnd = parseNode[3];
+        CodeTracked_parseAddOp(opOffset, codeStart, codeEnd);
+    }
+}
+
+typedef int __thiscall (*fn_ScrFncObj)(void* this, void* a2, void* a3, void* a4);
+
+
+int __thiscall hook_ScrFncObj_JScript(void* this, fn_ScrFncObj original, void* a2, void* a3, void* a4)
+{
+    unsigned int fnId = CodeTracked_parseFinish(this);
+    return original(this, a2, a3, a4);
+}
+
 typedef int __thiscall (*fn_jscript_Parser_ParseSource)(void* this, void* execBody, void* oleScript, wchar_t* a3,
                                         void *a4, void *a5, 
                                         void *a6, void *a7, 
@@ -220,6 +258,7 @@ int __thiscall hook_jscript_ParseSource(void* this, fn_jscript_Parser_ParseSourc
                                void *a8, 
                                void *a9)
 {
+    log_send('n', "PARSE START %d", CodeTracked_parseStart());
     log_send('c', "%ls", code);
     return original(this, execBody, oleScript, code, a4, a5, a6, a7, a8, a9);
 }

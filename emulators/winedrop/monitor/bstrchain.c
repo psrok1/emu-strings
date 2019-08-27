@@ -8,7 +8,7 @@
 BStrTracked* strings = NULL;
 ConstBStrTracked* consts = NULL;
 
-void TBStr_scanned_const(wchar_t* bstr)
+void TBStr_scanned_const(wchar_t* bstr, CodePosTracked* source)
 {
     /* Should be copied via BStr_new */
     ConstBStrTracked *s;
@@ -22,11 +22,17 @@ void TBStr_scanned_const(wchar_t* bstr)
         s->chash = hash;
         s->cstr = bstr;
         s->flags = TRACKED_ENABLED;
+        s->positions = NULL;
         HASH_ADD_INT( consts, chash, s );
+    }
+
+    if (source != NULL)
+    {
+        LL_APPEND(s->positions, source);
     }
 }
 
-void TBStr_add(wchar_t* bstr, unsigned int flags)
+void TBStr_add(wchar_t* bstr, unsigned int flags, CodePosTracked* source)
 {
     /* Handling dynamic or unbound strings */
     BStrTracked * s;
@@ -41,17 +47,23 @@ void TBStr_add(wchar_t* bstr, unsigned int flags)
         s = (BStrTracked*)malloc(sizeof *s);
         s->ptr = bstr;
         s->flags = flags;
+        s->positions = NULL;
         HASH_ADD_INT( strings, ptr, s );
+    }
+
+    if (source != NULL)
+    {
+        LL_APPEND(s->positions, source);
     }
 }
 
-void TBStr_add_from_var(wchar_t* bstr)
+void TBStr_add_from_var(wchar_t* bstr, CodePosTracked* source)
 {
-    TBStr_add(bstr, TRACKED_ENABLED);
+    TBStr_add(bstr, TRACKED_ENABLED, source);
 }
 
 
-void TBStr_add_from_const(wchar_t* cbstr)
+void TBStr_add_from_const(wchar_t* cbstr, CodePosTracked* source)
 {
     /**
      * CBStr format:
@@ -59,7 +71,7 @@ void TBStr_add_from_const(wchar_t* cbstr)
      *                             ^
      *                              --- BStr pointer
      */
-    TBStr_add(cbstr, TRACKED_ENABLED | TRACKED_CONST);
+    TBStr_add(cbstr, TRACKED_ENABLED | TRACKED_CONST, source);
 }
 
 void TBStr_disable(wchar_t* bstr)
@@ -90,13 +102,19 @@ void TBStr_clear(wchar_t* bstr)
 {
     BStrTracked *s;
     ConstBStrTracked *cs;
-    
+    CodePosTracked *elt, *tmp;
+
     if(!bstr)
         return;
 
     HASH_FIND_INT(strings, &bstr, s);
     if (s == NULL || (s->flags & TRACKED_ENABLED))
-        RBStr_send(bstr);
+    {
+        log_send('s', "%ls", bstr);
+        LL_FOREACH(s->positions, elt) {
+            log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
+        }
+    }
     
     if (s != NULL)
     {
@@ -109,10 +127,24 @@ void TBStr_clear(wchar_t* bstr)
             {
                 BStr_free(cs->cstr);
                 HASH_DEL(consts, cs);
+                if(cs->positions)
+                {
+                    LL_FOREACH_SAFE(cs->positions,elt,tmp) {
+                        LL_DELETE(cs->positions,elt);
+                        free(elt);
+                    }
+                }
                 free(cs);
             }
         }
         HASH_DEL(strings, s);
+        if(s->positions)
+        {
+            LL_FOREACH_SAFE(s->positions,elt,tmp) {
+                LL_DELETE(s->positions,elt);
+                free(elt);
+            }
+        }
         free(s);
     }
 }
@@ -121,18 +153,29 @@ void TBStr_dumpall()
 {
     BStrTracked *s, *stmp;
     ConstBStrTracked *cs, *cstmp;
+    CodePosTracked *elt;
 
     HASH_ITER(hh, strings, s, stmp) {
         HASH_DEL(strings, s);
         if((s->flags & TRACKED_ENABLED) && !(s->flags & TRACKED_CONST))
-            RBStr_send(s->ptr);
+        {
+            log_send('s', "%ls", s->ptr);
+            LL_FOREACH(s->positions, elt) {
+                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
+            }
+        }
         free(s);
     }
 
     HASH_ITER(hh, consts, cs, cstmp) {
         HASH_DEL(consts, cs);
         if(cs->flags & TRACKED_ENABLED)
-            RBStr_send(cs->cstr);
+        {
+            log_send('s', "%ls", cs->cstr);
+            LL_FOREACH(cs->positions, elt) {
+                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
+            }
+        }
         BStr_free(cs->cstr);
         free(cs);
     }

@@ -7,20 +7,15 @@ import sys
 
 def setup_logger():
     logging.basicConfig(level=logging.DEBUG)
-    log = logging.getLogger()
+    log = logging.getLogger("winedrop")
 
     fh = logging.FileHandler('winedrop.log')
     fh.setLevel(logging.DEBUG)
 
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
 
     log.addHandler(fh)
-    log.addHandler(ch)
     log.propagate = True
     return log
 

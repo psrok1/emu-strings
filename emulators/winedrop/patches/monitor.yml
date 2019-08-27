@@ -9,14 +9,17 @@ jscript.dll:
   "?SetConstBstr@VAR@@QAEXPAGPAVExecBody@@@Z": hook_VarSetConstBstr
   "?FInterrupt@CSession@@QAEHXZ": hook_SessionFInterrupt_JScript
   "?Run@CScriptRuntime@@QAEJPAVVAR@@@Z":
-    hook: hook_CScriptRuntimeRun_BOS_JScript
-    offset: -0x2037
-    expected: "89435489734c"
+    - hook: hook_CScriptRuntimeRun_JScript
+      offset: 0xe
+      expected: "895db833f6"
+    - hook: hook_CScriptRuntimeRun_OP_ADD_JScript
+      offset: -0xfaf
+      expected: "8b73488d7e10"
   "?GenPcode@Parser@@AAEXW4pcodes@@@Z":
     hook: hook_ParserGenPCode_JScript
     offset: 0x12
     expected: "0fbe86e8"
-
+  "??0ScrFncObj@@IAE@PAVCSession@@PAVFncInfo@@PAVVAR@@@Z": hook_ScrFncObj_JScript
 vbscript.dll:
   "?ParseSource@Parser@@QAEJPAPAVExecBody@@PAVCOleScript@@PBGKPAXJPAVCompileScriptException@@222@Z": hook_vbscript_ParseSource
   "?ScanStringConstant@Scanner@@AAE?AW4tokens@@I@Z": hook_ScanStringConstant

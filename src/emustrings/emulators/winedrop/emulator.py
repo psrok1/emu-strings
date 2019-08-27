@@ -20,7 +20,9 @@ class WinedropEmulator(Emulator):
         if not os.path.isfile(report_path):
             return defaultdict(list)
         with open(report_path) as f:
-            return json.load(f)
+            rep = json.load(f)
+        print(json.dumps(rep, indent=4))
+        return rep
 
     def connections(self):
         report = self._load_report()
@@ -31,14 +33,15 @@ class WinedropEmulator(Emulator):
         Returns list of strings found during emulation
         """
         report = self._load_report()
-        return list(set(report["strings"] + report["urls"]))
+        return report["strings"]
 
     def snippets(self):
         """
         Returns list of paths relative to workdir to code snippets
         """
         report = self._load_report()
-        return map(lambda h: (h, os.path.join(self.workdir, "snippets", h)), report["snippets"])
+        return []
+        #return map(lambda h: (h, os.path.join(self.workdir, "snippets", h)), report["snippets"])
 
     def logfiles(self):
         return [
