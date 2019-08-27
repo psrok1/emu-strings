@@ -12,6 +12,7 @@ void TBStr_scanned_const(wchar_t* bstr, CodePosTracked* source)
 {
     /* Should be copied via BStr_new */
     ConstBStrTracked *s;
+    CodePosTracked *el = NULL;
 
     unsigned int hash = BStr_hash(bstr);
 
@@ -28,7 +29,9 @@ void TBStr_scanned_const(wchar_t* bstr, CodePosTracked* source)
 
     if (source != NULL)
     {
-        LL_APPEND(s->positions, source);
+        LL_SEARCH(s->positions, el, source, CodeTracked_cmpCodePos);
+        if(!el) LL_APPEND(s->positions, source);
+        // else free
     }
 }
 
@@ -36,6 +39,7 @@ void TBStr_add(wchar_t* bstr, unsigned int flags, CodePosTracked* source)
 {
     /* Handling dynamic or unbound strings */
     BStrTracked * s;
+    CodePosTracked *el = NULL;
 
     if(BStr_length(bstr) <= 3)
         return;
@@ -53,7 +57,9 @@ void TBStr_add(wchar_t* bstr, unsigned int flags, CodePosTracked* source)
 
     if (source != NULL)
     {
-        LL_APPEND(s->positions, source);
+        LL_SEARCH(s->positions, el, source, CodeTracked_cmpCodePos);
+        if(!el) LL_APPEND(s->positions, source);
+        // else free
     }
 }
 

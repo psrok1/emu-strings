@@ -79,3 +79,9 @@ CodePosTracked* CodeTracked_getCodePosByLastOp() {
     lastOp = 0xFFFFFFFF;
     return codepos;
 }
+
+int CodeTracked_cmpCodePos(CodePosTracked *a, CodePosTracked *b) {
+    return  !(a->codeSeqId == b->codeSeqId &&
+              a->exprStart == b->exprStart &&
+              a->exprEnd == b->exprEnd);
+}

@@ -47,7 +47,8 @@ class Report(object):
     def report_extra(self, h, msg):
         code_id, pos_start, pos_end = map(int, msg.split(":"))
         code_id = self.codes[code_id]
-        self.strings[h]["from"].append((code_id, pos_start, pos_end))
+        if (code_id, pos_start, pos_end) not in self.strings[h]["from"]:
+            self.strings[h]["from"].append((code_id, pos_start, pos_end))
 
     def store(self):
         data = json.dumps({
