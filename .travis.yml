@@ -64,5 +64,5 @@ jobs:
       script: ./.travis/test.sh
     - stage: publish
       name: 'Push images as latest'
-      if: branch = master
+      if: (branch = master) AND (type = push)
       script: ./.travis/publish.sh
