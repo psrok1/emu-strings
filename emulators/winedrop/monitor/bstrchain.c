@@ -2,70 +2,8 @@
 #include <string.h>
 #include "log.h"
 #include "bstrchain.h"
-
-/**
- * BStr format:
- * [4-byte length][wide string]
- * ^              ^ BStr
- * \---BStrPtr
- */
-
-wchar_t* BStrPtr_to_BStr(void* ptr) {
-    return (wchar_t*)(((char*)ptr) + 4);
-}
-
-void* BStr_to_BStrPtr(wchar_t* bstr) {
-    return ((char*)bstr) - 4;
-}
-
-
-unsigned int BStr_length(wchar_t* bstr)
-{
-    return *((unsigned int*)BStr_to_BStrPtr(bstr))/2;
-}
-
-wchar_t* BStr_new(wchar_t* wc, unsigned int len)
-{
-    void* obj = malloc((len+1)*2 + 4);
-    *((unsigned int*)obj) = len*2;
-    wchar_t* nwc = BStrPtr_to_BStr(obj);
-    memcpy(nwc, wc, len*2);
-    nwc[len] = L'\x00';
-    return nwc;
-}
-
-wchar_t* BStr_copy(wchar_t* bstr)
-{
-    return BStr_new(bstr, BStr_length(bstr));
-}
-
-wchar_t* BStr_free(wchar_t* bstr)
-{
-    free(BStr_to_BStrPtr(bstr));
-}
-
-unsigned int BStr_hash(wchar_t* bstr)
-{
-    /* From jscript@CaseInsensitiveComputeHashCch */
-    unsigned int length = BStr_length(bstr);
-    unsigned int result = 0;
-    wchar_t* ptr = bstr;
-    wchar_t ch;
-    while(length > 0)
-    {
-        ch = *(ptr++);
-        length -= 1;
-        if ((ch - 65) <= 25)
-            ch += 32;
-        result = ch + 17 * result;
-    }
-    return result;
-}
-
-unsigned int CBStr_hash(wchar_t* bstr)
-{
-    return *(unsigned int*)(((char*)bstr) - 8);
-}
+#include "bstr.h"
+#include "bstrreport.h"
 
 BStrTracked* strings = NULL;
 ConstBStrTracked* consts = NULL;
@@ -153,9 +91,12 @@ void TBStr_clear(wchar_t* bstr)
     BStrTracked *s;
     ConstBStrTracked *cs;
     
+    if(!bstr)
+        return;
+
     HASH_FIND_INT(strings, &bstr, s);
     if (s == NULL || (s->flags & TRACKED_ENABLED))
-        log_send('s', "%ls", bstr);
+        RBStr_send(bstr);
     
     if (s != NULL)
     {
@@ -184,14 +125,14 @@ void TBStr_dumpall()
     HASH_ITER(hh, strings, s, stmp) {
         HASH_DEL(strings, s);
         if((s->flags & TRACKED_ENABLED) && !(s->flags & TRACKED_CONST))
-            log_send('s', "%ls", s->ptr);
+            RBStr_send(s->ptr);
         free(s);
     }
 
     HASH_ITER(hh, consts, cs, cstmp) {
         HASH_DEL(consts, cs);
         if(cs->flags & TRACKED_ENABLED)
-            log_send('s', "%ls", cs->cstr);
+            RBStr_send(cs->cstr);
         BStr_free(cs->cstr);
         free(cs);
     }

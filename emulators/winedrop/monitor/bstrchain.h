@@ -29,12 +29,6 @@ typedef struct sConstBStrTracked {
     UT_hash_handle hh;
 } ConstBStrTracked, *PConstBStrTracked;
 
-extern unsigned int BStr_length(wchar_t* bstr);
-extern wchar_t* BStr_new(wchar_t* wc, unsigned int len);
-extern wchar_t* BStr_copy(wchar_t* bstr);
-extern wchar_t* BStr_free(wchar_t* bstr);
-extern unsigned int CBStr_hash(wchar_t* bstr);
-
 extern void TBStr_scanned_const(wchar_t* bstr);
 extern void TBStr_add_from_var(wchar_t* bstr);
 extern void TBStr_add_from_const(wchar_t* cbstr);

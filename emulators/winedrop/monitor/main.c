@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "log.h"
+#include "bstr.h"
 #include "bstrchain.h"
 #include "bench.h"
 
