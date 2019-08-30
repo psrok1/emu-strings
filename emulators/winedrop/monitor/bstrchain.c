@@ -91,6 +91,9 @@ void TBStr_clear(wchar_t* bstr)
     BStrTracked *s;
     ConstBStrTracked *cs;
     
+    if(!bstr)
+        return;
+
     HASH_FIND_INT(strings, &bstr, s);
     if (s == NULL || (s->flags & TRACKED_ENABLED))
         RBStr_send(bstr);
