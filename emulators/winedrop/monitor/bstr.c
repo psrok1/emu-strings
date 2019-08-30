@@ -1,4 +1,5 @@
 #include "bstr.h"
+#include <string.h>
 
 /**
  * BStr format:

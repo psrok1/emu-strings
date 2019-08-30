@@ -21,6 +21,6 @@ echo Exporting winedrop to ./images... this may take a while.
 (
     mkdir -p images &&
     cd images &&
-    docker save winedrop -o winedrop.tar &&
+    docker save psrok1/winedrop -o winedrop.tar &&
     chmod 644 winedrop.tar
 ) || exit 1
