@@ -56,9 +56,9 @@ void CodeTracked_executeOp(unsigned int opPos)
 CodePosTracked* CodeTracked_getCodePosForConst(unsigned int exprStart, unsigned int exprEnd) {
     CodePosTracked* codepos;
     codepos = (CodePosTracked*)malloc(sizeof *codepos);
-    codepos->codeSeqId = codeCompiled->codeSeqId;
-    codepos->exprStart = exprStart;
-    codepos->exprEnd = exprEnd;
+    codepos->pos.codeSeqId = codeCompiled->codeSeqId;
+    codepos->pos.exprStart = exprStart;
+    codepos->pos.exprEnd = exprEnd;
     return codepos;
 }
 
@@ -69,19 +69,13 @@ CodePosTracked* CodeTracked_getCodePosByLastOp() {
     if(opt)
     {
         codepos = (CodePosTracked*)malloc(sizeof *codepos);
-        codepos->codeSeqId = codeExecuted->codeSeqId;
-        codepos->exprStart = opt->exprStart;
-        codepos->exprEnd = opt->exprEnd;
+        codepos->pos.codeSeqId = codeExecuted->codeSeqId;
+        codepos->pos.exprStart = opt->exprStart;
+        codepos->pos.exprEnd = opt->exprEnd;
     } else
     {
         codepos = NULL;
     }
     lastOp = 0xFFFFFFFF;
     return codepos;
-}
-
-int CodeTracked_cmpCodePos(CodePosTracked *a, CodePosTracked *b) {
-    return  !(a->codeSeqId == b->codeSeqId &&
-              a->exprStart == b->exprStart &&
-              a->exprEnd == b->exprEnd);
 }

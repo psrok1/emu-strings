@@ -2,6 +2,7 @@
 #define H_CODECHAIN
 
 #include <stdlib.h>
+#include "codepos.h"
 #include "uthash/include/uthash.h"
 
 typedef struct sOpTracked {
@@ -20,10 +21,8 @@ typedef struct sCodeTracked {
 } CodeTracked, *PCodeTracked;
 
 typedef struct sCodePosTracked {
-    unsigned int codeSeqId;
-    unsigned int exprStart;
-    unsigned int exprEnd;
-    struct sCodePosTracked* next;
+    CodePos pos;
+    UT_hash_handle hh;
 } CodePosTracked, *PCodePosTracked;
 
 
@@ -34,6 +33,5 @@ extern unsigned int CodeTracked_executeStart(void* ptrCScriptBody);
 extern void CodeTracked_executeOp(unsigned int opPos);
 extern CodePosTracked* CodeTracked_getCodePosForConst(unsigned int exprStart, unsigned int exprEnd);
 extern CodePosTracked* CodeTracked_getCodePosByLastOp();
-extern int CodeTracked_cmpCodePos(CodePosTracked *a, CodePosTracked *b);
 
 #endif

@@ -29,8 +29,8 @@ void TBStr_scanned_const(wchar_t* bstr, CodePosTracked* source)
 
     if (source != NULL)
     {
-        LL_SEARCH(s->positions, el, source, CodeTracked_cmpCodePos);
-        if(!el) LL_APPEND(s->positions, source);
+        HASH_FIND(hh, s->positions, &source->pos, sizeof(CodePos), el);
+        if(!el) HASH_ADD(hh, s->positions, pos, sizeof(CodePos), source);
         // else free
     }
 }
@@ -57,8 +57,8 @@ void TBStr_add(wchar_t* bstr, unsigned int flags, CodePosTracked* source)
 
     if (source != NULL)
     {
-        LL_SEARCH(s->positions, el, source, CodeTracked_cmpCodePos);
-        if(!el) LL_APPEND(s->positions, source);
+        HASH_FIND(hh, s->positions, &source->pos, sizeof(CodePos), el);
+        if(!el) HASH_ADD(hh, s->positions, pos, sizeof(CodePos), source);
         // else free
     }
 }
@@ -116,13 +116,7 @@ void TBStr_clear(wchar_t* bstr)
     HASH_FIND_INT(strings, &bstr, s);
     if (s == NULL || (s->flags & TRACKED_ENABLED))
     {
-        log_send('s', "%ls", bstr);
-        if(s != NULL)
-        {
-            LL_FOREACH(s->positions, elt) {
-                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
-            }
-        }
+        RBStr_send(bstr, s && s->positions);
     }
     
     if (s != NULL)
@@ -138,8 +132,8 @@ void TBStr_clear(wchar_t* bstr)
                 HASH_DEL(consts, cs);
                 if(cs->positions)
                 {
-                    LL_FOREACH_SAFE(cs->positions,elt,tmp) {
-                        LL_DELETE(cs->positions,elt);
+                    HASH_ITER(hh, cs->positions, elt, tmp) {
+                        HASH_DEL(cs->positions, elt);
                         free(elt);
                     }
                 }
@@ -149,8 +143,8 @@ void TBStr_clear(wchar_t* bstr)
         HASH_DEL(strings, s);
         if(s->positions)
         {
-            LL_FOREACH_SAFE(s->positions,elt,tmp) {
-                LL_DELETE(s->positions,elt);
+            HASH_ITER(hh, s->positions, elt, tmp) {
+                HASH_DEL(s->positions, elt);
                 free(elt);
             }
         }
@@ -168,10 +162,7 @@ void TBStr_dumpall()
         HASH_DEL(strings, s);
         if((s->flags & TRACKED_ENABLED) && !(s->flags & TRACKED_CONST))
         {
-            log_send('s', "%ls", s->ptr);
-            LL_FOREACH(s->positions, elt) {
-                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
-            }
+            RBStr_send(s->ptr, s->positions);
         }
         free(s);
     }
@@ -180,10 +171,7 @@ void TBStr_dumpall()
         HASH_DEL(consts, cs);
         if(cs->flags & TRACKED_ENABLED)
         {
-            log_send('s', "%ls", cs->cstr);
-            LL_FOREACH(cs->positions, elt) {
-                log_send('e', "%d:%d:%d", elt->codeSeqId, elt->exprStart, elt->exprEnd);
-            }
+            RBStr_send(cs->cstr, cs->positions);
         }
         BStr_free(cs->cstr);
         free(cs);
