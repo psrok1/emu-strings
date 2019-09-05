@@ -116,7 +116,7 @@ void TBStr_clear(wchar_t* bstr)
     HASH_FIND_INT(strings, &bstr, s);
     if (s == NULL || (s->flags & TRACKED_ENABLED))
     {
-        RBStr_send(bstr, s && s->positions);
+        RBStr_send(bstr, s ? s->positions : NULL);
     }
     
     if (s != NULL)

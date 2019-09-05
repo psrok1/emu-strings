@@ -207,14 +207,14 @@ int __stdcall hook_IgnoreSleep(fn_CHostObj_Sleep original, void* this, unsigned 
  * JSCRIPT.DLL
  ***/
 
-int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
-                                        unsigned int opcode,
-                                        unsigned int ebp,
-                                        unsigned int esp,
-                                        unsigned int ebx,
-                                        unsigned int edx,
-                                        unsigned int ecx,
-                                        unsigned int eax)
+void __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
+                                         unsigned int opcode,
+                                         unsigned int ebp,
+                                         unsigned int esp,
+                                         unsigned int ebx,
+                                         unsigned int edx,
+                                         unsigned int ecx,
+                                         unsigned int eax)
 {
     unsigned int opOffset, codeStart, codeEnd;
     unsigned int *parseNode;
@@ -225,7 +225,7 @@ int __cdecl hook_ParserGenPCode_JScript(char* parserPtr,
         if(*parseNode > 0x80)
         {
             parseNode = *(unsigned int**)(ebp+12);
-            if(parseNode == 0xFFFFFFFE)
+            if(parseNode == (void*)0xFFFFFFFE)
                 return;
         }
         codeStart = parseNode[2];
