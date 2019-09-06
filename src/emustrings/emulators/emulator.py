@@ -14,6 +14,11 @@ LOCAL_EMULATION_PATH = "/app/results/emulation/"
 
 
 def with_tag(image_name):
+    """
+    Adds tag to image name provided via "TAG" environment variable
+    :param image_name: Untagged image name
+    :return: Tagged image name
+    """
     tag = os.getenv("TAG", "latest")
     if ":" in image_name:
         return image_name
@@ -34,7 +39,7 @@ class Emulator(object):
 
     DEFAULT_SOFT_TIMEOUT = 120
     DEFAULT_HARD_TIMEOUT = 150
-    EMULATION_PATH = "/opt/analysis"
+    REMOTE_EMULATION_PATH = "/opt/analysis"
 
     @property
     def workdir(self) -> str:
@@ -97,13 +102,16 @@ class Emulator(object):
             },
             volumes={
                 os.path.abspath(self.workdir): {
-                    "bind": self.EMULATION_PATH,
+                    "bind": self.REMOTE_EMULATION_PATH,
                     "mode": "rw"
                 }
             }
         )
 
     def join(self) -> bool:
+        """
+        Waits for analysis to finish and forwards logs from container to internal logger
+        """
         try:
             for log in self.container.logs(stream=True):
                 self.logger.info(log)
@@ -113,35 +121,4 @@ class Emulator(object):
                 self.container.remove()
 
     def store_results(self, storage):
-        for connection in self.connections():
-            storage.add_url(connection, "connection")
-        for string in self.strings():
-            storage.add_string(string)
-        for snippet in self.snippets():
-            storage.add_snippet(snippet)
-        for logfile in self.logfiles():
-            storage.add_logfile(self, *logfile)
-
-    def connections(self) -> List[str]:
-        """
-        Returns list of URLs that script connected with during analysis
-        """
-        return []
-
-    def strings(self) -> List[str]:
-        """
-        Returns list of strings found during emulation
-        """
-        return []
-
-    def snippets(self) -> List[Tuple[str, str]]:
-        """
-        Returns list of tuples (hash, path) for code snippets
-        """
-        return []
-
-    def logfiles(self) -> List[Tuple[str, str]]:
-        """
-        Returns list of tuples (key, path) with log relative paths
-        """
-        return []
+        raise NotImplementedError()

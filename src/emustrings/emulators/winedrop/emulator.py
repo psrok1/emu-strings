@@ -1,8 +1,8 @@
-from collections import defaultdict
 import json
 import os
 
 from emustrings.emulators import Emulator, with_tag
+from emustrings.results import StringObject
 from emustrings import language
 
 
@@ -18,34 +18,27 @@ class WinedropEmulator(Emulator):
     def _load_report(self):
         report_path = os.path.join(self.workdir, "report.json")
         if not os.path.isfile(report_path):
-            return defaultdict(list)
+            return {}
         with open(report_path) as f:
-            rep = json.load(f)
-        print(json.dumps(rep, indent=4))
-        return rep
+            return json.load(f)
 
-    def connections(self):
+    def store_results(self, storage):
         report = self._load_report()
-        return list(set(report["urls"]))
 
-    def strings(self):
-        """
-        Returns list of strings found during emulation
-        """
-        report = self._load_report()
-        return report["strings"]
+        for hash, props in report.items():
+            string_object = StringObject(
+                hash=hash,
+                path=os.path.join(self.workdir, "snippets", hash) if props.get("in-file", False) else None,
+                value=props.get("value", None),
+                types=props["types"],
+                refs=props["refs"]
+            )
+            storage.push_string(string_object)
 
-    def snippets(self):
-        """
-        Returns list of paths relative to workdir to code snippets
-        """
-        report = self._load_report()
-        return []
-        #return map(lambda h: (h, os.path.join(self.workdir, "snippets", h)), report["snippets"])
-
-    def logfiles(self):
-        return [
+        logfiles = [
             ("stdout", os.path.join(self.workdir, "stdout.log")),
             ("wine", os.path.join(self.workdir, "wine.log")),
             ("winedrop", os.path.join(self.workdir, "winedrop.log"))
         ]
+        for logname, logpath in logfiles:
+            storage.push_logfile(self.__class__.__name__, logname, logpath)

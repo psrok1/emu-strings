@@ -56,6 +56,7 @@ class Analysis(object):
         self.sample = None
         self.options = None
         self.status = None
+        self.results = {}
 
         """
         Create new instance
@@ -63,7 +64,6 @@ class Analysis(object):
         if aid is None:
             self.aid = str(uuid.uuid4())
             os.makedirs(self.workdir)
-            self.storage = ResultsStore(self.workdir)
             self.db_collection().insert({
                 "aid": self.aid,
                 "status": self.STATUS_PENDING,
@@ -86,11 +86,9 @@ class Analysis(object):
             self.timestamp = params["timestamp"]
             self.sample = Sample.load(self.workdir, params["sample"])
             self.options = params.get("options", {})
+            self.results = params.get("results", {})
         except IndexError as e:
             raise IOError("Analysis {} is corrupted!".format(aid)) from e
-
-        self.storage = ResultsStore(self.workdir)
-        self.storage.load(params)
 
     @staticmethod
     def find_analysis(sample):
@@ -163,15 +161,19 @@ class Analysis(object):
                     self.sample,
                     self.options)
 
+            storage = ResultsStore(self.workdir)
             for emulator in emulators:
                 emulator.join()
                 logging.info("%s: Emulation finished using %s (%s)", self.aid, emulator.name, emulator.emuid)
-                emulator.store_results(self.storage)
+                emulator.store_results(storage)
 
             logging.info("%s: Done", self.aid)
 
+            self.results = storage.store_dict()
             self.db_collection().update({"aid": self.aid},
-                                        {"$set": self.storage.store()})
+                                        {"$set": {
+                                            "results": self.results
+                                        }})
             self.set_status(Analysis.STATUS_SUCCESS)
         except Exception as exc:
             import traceback
@@ -183,6 +185,6 @@ class Analysis(object):
             "sample": self.sample.to_dict(),
             "status": self.status,
             "timestamp": self.timestamp,
-            "results": self.storage.store(),
-            "options": self.options
+            "options": self.options,
+            "results": self.results
         }

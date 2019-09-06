@@ -26,7 +26,7 @@ class HTTPListener(FakenetListener):
                 self.send_response(500)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                ctx.report.report_url(self._get_url())
+                ctx.report.report_http(self._get_url())
 
             def do_GET(self):
                 self._set_headers()
