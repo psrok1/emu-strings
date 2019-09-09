@@ -47,6 +47,11 @@ pre.exception {
     cursor: pointer;
 }
 
+.ref-markup {
+    background-color: #ff6;
+    position: absolute;
+}
+
 .snippets {
     width: 100%;
     height: 500px;

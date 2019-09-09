@@ -147,7 +147,8 @@ class ResultsStore(object):
             "objects": {
                 obj.hash: {
                     "types": list(obj.types),
-                    "refs": list(obj.refs)
+                    "refs": list(obj.refs),
+                    "size": obj.get_length()
                 } for obj in self.objects.values()
             }
         }

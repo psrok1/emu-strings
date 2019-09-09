@@ -26,10 +26,22 @@ class SnippetViewer extends Component {
         let snip = this.props.snippet;
         if(!snip)
             return;
-        let response = await axios.get(`/api/analysis/${aid}/snippets/${snip}`);
+        let response = await axios.get(`/api/analysis/${aid}/snippet/${snip}`);
         this.setState({
             content: response.data
         })
+    }
+
+    get markers() {
+        if(!this.props.markers)
+            return [];
+        return this.props.markers.map((ref) => ({
+            startRow: 0,
+            endRow: 0,
+            startCol: ref[0],
+            endCol: ref[1],
+            className: "ref-markup"
+        }));
     }
 
     render() {
@@ -40,7 +52,8 @@ class SnippetViewer extends Component {
                           fontSize={14}
                           readOnly
                           showGutter
-                          wrapEnabled />
+                          wrapEnabled
+                          markers={this.markers} />
     }
 }
 
@@ -58,6 +71,14 @@ export default class SnippetsPresenter extends Component {
 
     render() {
         let snippets = this.props.snippets;
+        let markupsByReferal = {}
+        let filteredSnippetKeys = Object.keys(snippets);
+        if(this.props.refs) {
+            filteredSnippetKeys = Array.from(new Set(this.props.refs.map(ref => ref[0])))
+            for(let ref of this.props.refs) {
+                markupsByReferal[ref[0]] = (markupsByReferal[ref[0]] || []).concat([[ref[1], ref[2]]])
+            }
+        }
         return (
             <div>
                 <h3 id="snippets">
@@ -65,7 +86,16 @@ export default class SnippetsPresenter extends Component {
                 </h3>
                 <div>
                 {
-                    !Object.keys(snippets).length
+                    this.props.refs
+                    ? <div className="alert alert-warning" role="alert">
+                        <button type="button" className="close" onClick={ev => { ev.preventDefault(); this.props.clearRefs(); }}>
+                            <span>&times;</span>
+                        </button>
+                        Filtered snippets that refer to &quot;{this.props.referee}&quot;
+                    </div> : []
+                }
+                {
+                    !filteredSnippetKeys.length
                     ? (
                     <div class="alert alert-danger" role="alert">
                         No snippets found during analysis!
@@ -74,7 +104,7 @@ export default class SnippetsPresenter extends Component {
                         <div class="row">
                             <div class="col-3 nav nav-pills snippets">
                                 {
-                                    Object.keys(snippets)
+                                    filteredSnippetKeys
                                           .sort((a,b) => snippets[b].size - snippets[a].size)
                                           .map(snippet => (
                                             <a className={`nav-link ${this.state.selected === snippet ? "active" : ""}`}
@@ -91,7 +121,8 @@ export default class SnippetsPresenter extends Component {
                                     this.state.selected 
                                     ? <SnippetViewer 
                                         analysis={this.props.analysis}
-                                        snippet={this.state.selected} />
+                                        snippet={this.state.selected}
+                                        markers={markupsByReferal[this.state.selected]} />
                                     : <div className="snippet-view text-center">
                                         <FontAwesomeIcon icon="hand-point-left"/>
                                         <div>Select one of the snippets presented on the left</div>
