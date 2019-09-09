@@ -16,7 +16,7 @@ class StringObject(object):
         self._value = value
         self.path = path
         self.types = set(types)
-        self.refs = set(refs)
+        self.refs = set(map(tuple, refs))
 
     @property
     def value(self):
@@ -28,7 +28,7 @@ class StringObject(object):
     @property
     def hash(self):
         if not self._hash:
-            self._hash = hashlib.sha256(self._value).hexdigest()
+            self._hash = hashlib.sha256(self._value.encode("utf8")).hexdigest()
         return self._hash
 
     def get_length(self):
@@ -59,7 +59,7 @@ class StringObject(object):
         for typ in other.types:
             self.types.add(typ)
         for ref in other.refs:
-            self.refs.add(ref)
+            self.refs.add(tuple(ref))
 
 
 class ResultsStore(object):
@@ -123,6 +123,22 @@ class ResultsStore(object):
         else:
             self.logfiles[emulator_name].append(log_name)
 
+    def read_logfile(self, emulator_name, log_name):
+        if "." in emulator_name or "." in log_name:
+            return None
+        logfile_path = os.path.join(self.workdir, "logfiles", emulator_name, log_name)
+        if not os.path.exists(logfile_path):
+            return None
+        with open(logfile_path) as f:
+            return f.read()
+
+    def read_snippet(self, snippet_hash):
+        if "." in snippet_hash:
+            return None
+        snippet_path = os.path.join(self.workdir, "snippets", snippet_hash)
+        with open(snippet_path) as f:
+            return f.read()
+
     def store_dict(self):
         return {
             "logfiles": self.logfiles,
@@ -132,6 +148,6 @@ class ResultsStore(object):
                 obj.hash: {
                     "types": list(obj.types),
                     "refs": list(obj.refs)
-                } for obj in self.objects
+                } for obj in self.objects.values()
             }
         }

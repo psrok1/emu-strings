@@ -1,5 +1,6 @@
 #root {
     width: 100%;
+    margin-bottom: 32pt;
 }
 
 .mid-width {
@@ -31,13 +32,19 @@ pre.exception {
     margin: 1rem;
 }
 
-pre.strings {
+.strings {
     text-align: left;
     padding: 8pt;
     background-color: #334;
     color: white;
     max-height: 400px;
+    font-family: monospace;
     overflow: auto;
+}
+
+.referred-string:hover {
+    color: yellow;
+    cursor: pointer;
 }
 
 .snippets {

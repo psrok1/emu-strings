@@ -2,6 +2,19 @@ import React, {Component} from "react";
 import { HashLink } from "react-router-hash-link";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
+export function StringsViewer(props) {
+    return <div className="strings">
+    {
+        props.strings.map(s => (
+            props.hasRefs(s) ?
+                <div className="referred-string" onClick={(ev) => { ev.preventDefault(); props.showRefs(s)}}>{s}</div> : 
+                <div>{s}</div>
+            ))
+    }
+    </div>
+}
+
+
 export default class StringsPresenter extends Component {
     state = {
         sortMode: "alpha"
@@ -64,7 +77,9 @@ export default class StringsPresenter extends Component {
                                     </a>
                                 </li>
                             </ul>
-                            <pre className="strings">{this.sortedStrings.join('\n')}</pre>
+                            <StringsViewer strings={this.sortedStrings}
+                                           showRefs={this.props.showRefs}
+                                           hasRefs={this.props.hasRefs} />
                         </div>
                     )
                 }

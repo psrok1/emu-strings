@@ -23,10 +23,11 @@ class LogViewer extends Component {
             content: undefined
         })
         let aid = this.props.analysis;
+        let emulator = this.props.emulator;
         let logid = this.props.log;
-        if(!logid)
+        if(!emulator || !logid)
             return;
-        let response = await axios.get(`/api/analysis/${aid}/logfiles/${logid}`);
+        let response = await axios.get(`/api/analysis/${aid}/logfile/${emulator}/${logid}`);
         this.setState({
             content: response.data
         })
@@ -97,11 +98,10 @@ export default class LogPresenter extends Component {
                             <div class="row">
                                 <div class="col-3 nav nav-pills snippets">
                                     {
-                                        Object.keys(logfiles[this.state.emulator]).map(log => {
-                                            let logid = `${this.state.emulator}-${log}`;
-                                            return <a className={`nav-link ${this.state.selected === logid ? "active" : ""}`}
+                                        logfiles[this.state.emulator].map(log => {
+                                            return <a className={`nav-link ${this.state.selected === log ? "active" : ""}`}
                                                     href="#logfile"
-                                                    onClick={ev => { ev.preventDefault(); this.selectLog(logid) }}>
+                                                    onClick={ev => { ev.preventDefault(); this.selectLog(log) }}>
                                                         {log}
                                             </a>
                                         })
@@ -112,6 +112,7 @@ export default class LogPresenter extends Component {
                                         this.state.selected 
                                         ? <LogViewer 
                                             analysis={this.props.analysis}
+                                            emulator={this.state.emulator}
                                             log={this.state.selected} />
                                         : <div className="snippet-view text-center">
                                             <FontAwesomeIcon icon="hand-point-left"/>

@@ -180,6 +180,12 @@ class Analysis(object):
             logging.exception("%s: Critical error occured", self.aid)
             self.set_status(Analysis.STATUS_FAILED, traceback.format_exc())
 
+    def get_snippet(self, snippet_hash):
+        return ResultsStore(self.workdir).read_snippet(snippet_hash)
+
+    def get_logfile(self, emulator, logname):
+        return ResultsStore(self.workdir).read_logfile(emulator, logname)
+
     def to_dict(self):
         return {
             "sample": self.sample.to_dict(),

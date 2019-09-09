@@ -35,10 +35,16 @@ def get_analysis_by_sample(aid):
     return jsonify(entry.to_dict())
 
 
-@app.route("/api/analysis/<aid>/<key>/<identifier>")
-def get_artifact(aid, key, identifier):
+@app.route("/api/analysis/<aid>/snippet/<identifier>")
+def get_snippet(aid, identifier):
     entry = Analysis.get_analysis(aid)
-    return entry.storage.load_element(key, identifier)
+    return entry.get_snippet(identifier) or jsonify({"error": "Snippet doesn't exist"})
+
+
+@app.route("/api/analysis/<aid>/logfile/<emulator>/<identifier>")
+def get_logfile(aid, emulator, identifier):
+    entry = Analysis.get_analysis(aid)
+    return entry.get_logfile(emulator, identifier) or jsonify({"error": "Logfile doesn't exist"})
 
 
 @app.route("/api/submit", methods=["POST"])

@@ -9,7 +9,7 @@ export default class Nav extends Component{
             <nav className="navbar navbar-expand-md navbar-dark bg-dark">
                 <div className="container">
                     <Link className="navbar-brand" to="/">
-                        <img src={logo} style={
+                        <img src={logo} alt="logo" style={
                             {
                                 height: "3rem", 
                                 marginRight: "1rem"
