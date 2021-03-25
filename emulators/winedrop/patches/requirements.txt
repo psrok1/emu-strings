@@ -2,4 +2,4 @@ pefile
 construct==2.5.2
 pdbparse==1.2
 requests
-pyyaml==5.1
+pyyaml==5.4
